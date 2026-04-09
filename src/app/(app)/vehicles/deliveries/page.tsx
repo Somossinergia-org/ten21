@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole, getTenantId } from "@/lib/tenant";
+import { requireRole, getCurrentUser } from "@/lib/tenant";
 import * as deliveryService from "@/services/delivery.service";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -11,9 +11,11 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default async function DeliveriesPage() {
-  await requireRole(["JEFE", "REPARTO"]);
-  const tenantId = await getTenantId();
-  const deliveries = await deliveryService.listDeliveries(tenantId);
+  const session = await requireRole(["JEFE", "REPARTO"]);
+  const user = session.user;
+  // REPARTO only sees their own deliveries, JEFE sees all
+  const filterUserId = user.role === "REPARTO" ? user.id : undefined;
+  const deliveries = await deliveryService.listDeliveries(user.tenantId, filterUserId);
 
   return (
     <div>

@@ -20,9 +20,13 @@ async function generateDeliveryNumber(tenantId: string): Promise<string> {
 // QUERIES
 // ============================================================
 
-export async function listDeliveries(tenantId: string) {
+export async function listDeliveries(tenantId: string, userId?: string) {
   return db.delivery.findMany({
-    where: { tenantId },
+    where: {
+      tenantId,
+      // REPARTO only sees their own deliveries (userId passed by action)
+      ...(userId ? { assignedToId: userId } : {}),
+    },
     include: {
       vehicle: { select: { name: true, plate: true } },
       assignedTo: { select: { name: true } },
@@ -64,9 +68,26 @@ export async function createDelivery(
   data: CreateDeliveryInput,
   tenantId: string,
 ) {
-  const deliveryNumber = await generateDeliveryNumber(tenantId);
-
   return db.$transaction(async (tx) => {
+    // Validate vehicle is not already in use
+    const vehicle = await tx.vehicle.findFirst({
+      where: { id: data.vehicleId, tenantId },
+    });
+
+    if (!vehicle) {
+      throw new Error("Vehiculo no encontrado");
+    }
+
+    if (vehicle.status === "IN_USE") {
+      throw new Error("Este vehiculo ya esta en uso");
+    }
+
+    if (vehicle.status === "INCIDENT" || vehicle.status === "WORKSHOP") {
+      throw new Error("Este vehiculo no esta disponible (averiado o en taller)");
+    }
+
+    const deliveryNumber = await generateDeliveryNumber(tenantId);
+
     const delivery = await tx.delivery.create({
       data: {
         deliveryNumber,
@@ -83,7 +104,6 @@ export async function createDelivery(
       },
     });
 
-    // Vehicle is now assigned
     await tx.vehicle.update({
       where: { id: data.vehicleId },
       data: { status: "IN_USE" },
@@ -102,12 +122,27 @@ export async function startDelivery(
   tenantId: string,
   startKm?: number,
 ) {
-  const delivery = await db.delivery.findFirst({
-    where: { id, tenantId, status: "ASSIGNED" },
-  });
-  if (!delivery) throw new Error("Entrega no encontrada o no esta asignada");
-
   return db.$transaction(async (tx) => {
+    const delivery = await tx.delivery.findFirst({
+      where: { id, tenantId, status: "ASSIGNED" },
+    });
+    if (!delivery) throw new Error("Entrega no encontrada o no esta asignada");
+
+    // Verify vehicle is still assigned to this delivery (not reassigned externally)
+    if (delivery.vehicleId) {
+      const vehicle = await tx.vehicle.findFirst({
+        where: { id: delivery.vehicleId },
+      });
+
+      if (vehicle && vehicle.status !== "IN_USE") {
+        // Vehicle was freed externally — re-claim it
+        await tx.vehicle.update({
+          where: { id: delivery.vehicleId },
+          data: { status: "IN_USE" },
+        });
+      }
+    }
+
     await tx.delivery.update({
       where: { id },
       data: {
@@ -115,13 +150,6 @@ export async function startDelivery(
         startKm: startKm ?? null,
       },
     });
-
-    if (delivery.vehicleId) {
-      await tx.vehicle.update({
-        where: { id: delivery.vehicleId },
-        data: { status: "IN_USE" },
-      });
-    }
   });
 }
 
@@ -146,7 +174,6 @@ export async function completeDelivery(
       },
     });
 
-    // Vehicle becomes available again
     if (delivery.vehicleId) {
       await tx.vehicle.update({
         where: { id: delivery.vehicleId },
