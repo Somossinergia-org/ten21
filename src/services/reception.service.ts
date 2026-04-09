@@ -92,7 +92,7 @@ type IncidentToCreate = {
  * Compare a single reception line against its expected values.
  * Returns a list of incidents to create (0, 1, or 2).
  */
-function compareLineForIncidents(
+export function compareLineForIncidents(
   line: ReceptionLineInput,
   productRef: string,
   productName: string,
