@@ -40,6 +40,7 @@ const navGroups: NavGroup[] = [
     title: "Reparto",
     items: [
       { label: "Vehiculos", href: "/vehicles", roles: ["JEFE", "REPARTO"] },
+      { label: "Entregas", href: "/vehicles/deliveries", roles: ["JEFE", "REPARTO"] },
     ],
   },
 ];
