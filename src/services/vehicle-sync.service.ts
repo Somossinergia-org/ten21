@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { fetchGpsVehicles, type GpsVehicle } from "@/lib/external/gps-api";
+import { fetchGpsVehicles } from "@/lib/external/gps-api";
 import type { VehicleStatus } from "@prisma/client";
 
 /**
@@ -11,10 +11,22 @@ function mapEngineToStatus(engine: string): VehicleStatus {
   return engine === "1" ? "IN_USE" : "AVAILABLE";
 }
 
+/**
+ * Check if a vehicle has any delivery currently IN_TRANSIT.
+ * If so, the internal system owns the status — GPS should not overwrite it.
+ */
+async function hasActiveDelivery(vehicleId: string): Promise<boolean> {
+  const count = await db.delivery.count({
+    where: { vehicleId, status: "IN_TRANSIT" },
+  });
+  return count > 0;
+}
+
 type SyncResult = {
   total: number;
   created: number;
   updated: number;
+  skippedStatus: number;
   errors: string[];
 };
 
@@ -24,6 +36,7 @@ type SyncResult = {
  * - Calls the GPS API (wsAcc=vl)
  * - For each vehicle, upserts by (tenantId, externalId)
  * - Maps: id → externalId, name → name + plate, engine → status
+ * - Does NOT overwrite status if the vehicle has an active delivery (IN_TRANSIT)
  */
 export async function syncVehicles(tenantId: string): Promise<SyncResult> {
   const gpsVehicles = await fetchGpsVehicles();
@@ -32,6 +45,7 @@ export async function syncVehicles(tenantId: string): Promise<SyncResult> {
     total: gpsVehicles.length,
     created: 0,
     updated: 0,
+    skippedStatus: 0,
     errors: [],
   };
 
@@ -47,44 +61,49 @@ export async function syncVehicles(tenantId: string): Promise<SyncResult> {
       });
 
       if (existing) {
-        // Update existing vehicle
+        const busy = await hasActiveDelivery(existing.id);
+
         await db.vehicle.update({
           where: { id: existing.id },
           data: {
             name: gv.name,
-            status: mapEngineToStatus(gv.engine),
             lastSyncedAt: new Date(),
+            // Only update status if no active delivery
+            ...(!busy ? { status: mapEngineToStatus(gv.engine) } : {}),
           },
         });
+
+        if (busy) result.skippedStatus++;
         result.updated++;
       } else {
         // Check if plate already exists (avoid unique conflict)
-        const plateValue = gv.name;
         const existingByPlate = await db.vehicle.findUnique({
           where: {
             tenantId_plate: {
               tenantId,
-              plate: plateValue,
+              plate: gv.name,
             },
           },
         });
 
         if (existingByPlate) {
-          // Link existing manual vehicle to external ID
+          const busy = await hasActiveDelivery(existingByPlate.id);
+
           await db.vehicle.update({
             where: { id: existingByPlate.id },
             data: {
               externalId: gv.id,
-              status: mapEngineToStatus(gv.engine),
               lastSyncedAt: new Date(),
+              ...(!busy ? { status: mapEngineToStatus(gv.engine) } : {}),
             },
           });
+
+          if (busy) result.skippedStatus++;
           result.updated++;
         } else {
-          // Create new vehicle
           await db.vehicle.create({
             data: {
-              plate: plateValue,
+              plate: gv.name,
               name: gv.name,
               externalId: gv.id,
               status: mapEngineToStatus(gv.engine),

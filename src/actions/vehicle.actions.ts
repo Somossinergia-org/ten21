@@ -10,6 +10,7 @@ type SyncActionResult = {
   total?: number;
   created?: number;
   updated?: number;
+  skippedStatus?: number;
   errors?: string[];
 };
 
@@ -27,6 +28,7 @@ export async function syncVehiclesAction(): Promise<SyncActionResult> {
       total: result.total,
       created: result.created,
       updated: result.updated,
+      skippedStatus: result.skippedStatus,
       errors: result.errors.length > 0 ? result.errors : undefined,
     };
   } catch (e: unknown) {

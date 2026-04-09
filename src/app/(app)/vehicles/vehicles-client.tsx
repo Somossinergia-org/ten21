@@ -38,11 +38,12 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
     setSyncing(false);
 
     if (result.success) {
+      const parts = [`${result.total} vehiculo(s): ${result.created} nuevos, ${result.updated} actualizados`];
+      if (result.skippedStatus) parts.push(`${result.skippedStatus} con estado protegido (entrega activa)`);
+      if (result.errors?.length) parts.push(`${result.errors.length} error(es)`);
       setSyncResult({
         success: true,
-        message: `Sincronizados ${result.total} vehiculo(s): ${result.created} nuevos, ${result.updated} actualizados.${
-          result.errors?.length ? ` ${result.errors.length} error(es).` : ""
-        }`,
+        message: `Sincronizados ${parts.join(". ")}.`,
       });
       router.refresh();
     } else {
