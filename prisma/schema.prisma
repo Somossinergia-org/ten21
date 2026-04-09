@@ -259,19 +259,22 @@ enum DeliveryStatus {
 }
 
 model Vehicle {
-  id        String        @id @default(cuid())
-  plate     String
-  name      String
-  status    VehicleStatus @default(AVAILABLE)
-  active    Boolean       @default(true)
-  tenantId  String
-  tenant    Tenant        @relation(fields: [tenantId], references: [id])
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  plate        String
+  name         String
+  status       VehicleStatus @default(AVAILABLE)
+  active       Boolean       @default(true)
+  externalId   String?
+  lastSyncedAt DateTime?
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   deliveries Delivery[]
 
   @@unique([tenantId, plate])
+  @@unique([tenantId, externalId])
   @@index([tenantId])
   @@index([tenantId, status])
 }
