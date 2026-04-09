@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type Tenant = {
   id: string;
@@ -10,25 +10,13 @@ type Tenant = {
   slug: string;
 };
 
-export function LoginForm() {
+export function LoginForm({ tenants }: { tenants: Tenant[] }) {
   const router = useRouter();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [tenantId, setTenantId] = useState("");
+  const [tenantId, setTenantId] = useState(tenants.length === 1 ? tenants[0].id : "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/tenants")
-      .then((res) => res.json())
-      .then((data) => {
-        setTenants(data);
-        if (data.length === 1) {
-          setTenantId(data[0].id);
-        }
-      });
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

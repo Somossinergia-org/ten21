@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -7,6 +8,13 @@ export default async function LoginPage() {
   if (session?.user) {
     redirect("/dashboard");
   }
+
+  // Load tenants on the server so the form renders with data even without JS
+  const tenants = await db.tenant.findMany({
+    where: { active: true },
+    select: { id: true, name: true, slug: true },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 py-12">
@@ -19,7 +27,7 @@ export default async function LoginPage() {
             Gestion de tienda
           </p>
         </div>
-        <LoginForm />
+        <LoginForm tenants={tenants} />
       </div>
     </div>
   );
