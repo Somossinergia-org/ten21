@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// TENANT (TIENDA)
+// ============================================================
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  products       Product[]
+  suppliers      Supplier[]
+  purchaseOrders PurchaseOrder[]
+  receptions     Reception[]
+  incidents      Incident[]
+  vehicles       Vehicle[]
+  deliveries     Delivery[]
+}
+
+// ============================================================
+// USUARIOS Y ROLES
+// ============================================================
+enum Role {
+  JEFE
+  ALMACEN
+  REPARTO
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String
+  name      String
+  password  String
+  role      Role     @default(ALMACEN)
+  active    Boolean  @default(true)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases          PurchaseOrder[]
+  receptions         Reception[]
+  incidents          Incident[]
+  assignedDeliveries Delivery[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+// ============================================================
+// PRODUCTOS
+// ============================================================
+model Product {
+  id          String   @id @default(cuid())
+  ref         String
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchaseLines PurchaseOrderLine[]
+
+  @@unique([tenantId, ref])
+  @@index([tenantId])
+}
+
+// ============================================================
+// PROVEEDORES
+// ============================================================
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  code      String
+  phone     String?
+  email     String?
+  active    Boolean  @default(true)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders PurchaseOrder[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+// ============================================================
+// FLUJO DE ENTRADA: PEDIDOS A PROVEEDOR
+// ============================================================
+enum PurchaseStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  RECEIVED
+  CLOSED
+}
+
+enum PurchaseOrderType {
+  SALE
+  EXHIBITION
+}
+
+model PurchaseOrder {
+  id          String            @id @default(cuid())
+  orderNumber String
+  type        PurchaseOrderType @default(SALE)
+  supplierId  String
+  supplier    Supplier          @relation(fields: [supplierId], references: [id])
+  status      PurchaseStatus    @default(DRAFT)
+  notes       String?
+  tenantId    String
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  createdById String
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  lines      PurchaseOrderLine[]
+  receptions Reception[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model PurchaseOrderLine {
+  id               String        @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product       @relation(fields: [productId], references: [id])
+  quantityOrdered  Int
+  quantityReceived Int           @default(0)
+  expectedUnitCost Decimal?
+
+  receptionLines ReceptionLine[]
+}
+
+// ============================================================
+// FLUJO DE ENTRADA: RECEPCION (ALBARAN)
+// ============================================================
+enum ReceptionStatus {
+  PENDING
+  CHECKING
+  COMPLETED
+  WITH_INCIDENTS
+}
+
+model Reception {
+  id              String          @id @default(cuid())
+  receptionNumber String
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id])
+  deliveryNoteRef String?
+  status          ReceptionStatus @default(PENDING)
+  receivedById    String
+  receivedBy      User            @relation(fields: [receivedById], references: [id])
+  receivedAt      DateTime        @default(now())
+  notes           String?
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  lines     ReceptionLine[]
+  incidents Incident[]
+
+  @@unique([tenantId, receptionNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model ReceptionLine {
+  id                  String            @id @default(cuid())
+  receptionId         String
+  reception           Reception         @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+  purchaseOrderLineId String
+  purchaseOrderLine   PurchaseOrderLine @relation(fields: [purchaseOrderLineId], references: [id])
+  quantityExpected    Int
+  quantityReceived    Int
+  quantityDamaged     Int               @default(0)
+  notes               String?
+
+  @@unique([receptionId, purchaseOrderLineId])
+}
+
+// ============================================================
+// INCIDENCIAS
+// ============================================================
+enum IncidentStatus {
+  REGISTERED
+  NOTIFIED
+  REVIEWED
+  CLOSED
+}
+
+enum IncidentType {
+  QUANTITY_MISMATCH
+  DAMAGED
+  WRONG_PRODUCT
+  OTHER
+}
+
+model Incident {
+  id           String         @id @default(cuid())
+  receptionId  String
+  reception    Reception      @relation(fields: [receptionId], references: [id])
+  type         IncidentType
+  status       IncidentStatus @default(REGISTERED)
+  description  String
+  resolution   String?
+  reportedById String
+  reportedBy   User           @relation(fields: [reportedById], references: [id])
+  tenantId     String
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+// ============================================================
+// FLUJO DE SALIDA: VEHICULOS Y ENTREGAS
+// ============================================================
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  INCIDENT
+  WORKSHOP
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+model Vehicle {
+  id        String        @id @default(cuid())
+  plate     String
+  name      String
+  status    VehicleStatus @default(AVAILABLE)
+  active    Boolean       @default(true)
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id])
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  deliveries Delivery[]
+
+  @@unique([tenantId, plate])
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model Delivery {
+  id              String         @id @default(cuid())
+  deliveryNumber  String
+  vehicleId       String?
+  vehicle         Vehicle?       @relation(fields: [vehicleId], references: [id])
+  assignedToId    String?
+  assignedTo      User?          @relation(fields: [assignedToId], references: [id])
+  customerName    String
+  customerPhone   String?
+  customerAddress String
+  description     String
+  status          DeliveryStatus @default(PENDING)
+  scheduledDate   DateTime?
+  deliveredAt     DateTime?
+  startKm         Int?
+  endKm           Int?
+  notes           String?
+  tenantId        String
+  tenant          Tenant         @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([tenantId, deliveryNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([assignedToId])
+}
