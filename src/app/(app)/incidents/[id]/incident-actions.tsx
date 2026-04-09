@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { transitionIncidentAction } from "@/actions/incident.actions";
+
 type TransitionTarget = "NOTIFIED" | "REVIEWED" | "CLOSED";
 
 const transitionConfig: Record<
-  string,
+  TransitionTarget,
   { label: string; buttonColor: string; description: string }
 > = {
   NOTIFIED: {
@@ -38,29 +39,41 @@ export function IncidentActions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showClose, setShowClose] = useState(false);
   const [resolution, setResolution] = useState("");
 
-  async function handleTransition(newStatus: TransitionTarget) {
-    if (newStatus === "CLOSED") {
-      setShowClose(true);
-      return;
-    }
+  const handleTransition = useCallback(
+    async (newStatus: TransitionTarget) => {
+      if (newStatus === "CLOSED") {
+        setShowClose(true);
+        return;
+      }
 
-    setError("");
-    setLoading(true);
-    const result = await transitionIncidentAction({
-      incidentId,
-      newStatus,
-    });
-    setLoading(false);
+      if (loading) return; // Prevent double submit
 
-    if (!result.success) {
-      setError(result.error || "Error");
-      return;
-    }
-    router.refresh();
-  }
+      setError("");
+      setSuccess("");
+      setLoading(true);
+
+      const result = await transitionIncidentAction({
+        incidentId,
+        newStatus,
+      });
+
+      setLoading(false);
+
+      if (!result.success) {
+        setError(result.error || "Error");
+        return;
+      }
+
+      const config = transitionConfig[newStatus];
+      setSuccess(`Estado cambiado: ${config.label.replace("Marcar como ", "")}`);
+      router.refresh();
+    },
+    [incidentId, loading, router],
+  );
 
   async function handleClose() {
     if (!resolution.trim()) {
@@ -68,26 +81,40 @@ export function IncidentActions({
       return;
     }
 
+    if (loading) return; // Prevent double submit
+
     setError("");
+    setSuccess("");
     setLoading(true);
+
     const result = await transitionIncidentAction({
       incidentId,
       newStatus: "CLOSED",
       resolution,
     });
+
     setLoading(false);
 
     if (!result.success) {
       setError(result.error || "Error");
       return;
     }
+
     setShowClose(false);
+    setSuccess("Incidencia cerrada correctamente");
     router.refresh();
   }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Acciones</h3>
+
+      {/* Success feedback */}
+      {success && (
+        <div className="mb-3 rounded-md bg-green-50 border border-green-200 px-3 py-2">
+          <p className="text-sm text-green-700">{success}</p>
+        </div>
+      )}
 
       {!showClose && (
         <div className="flex items-start gap-3">
@@ -99,7 +126,7 @@ export function IncidentActions({
                 <button
                   onClick={() => handleTransition(ns)}
                   disabled={loading}
-                  className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${config.buttonColor}`}
+                  className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed ${config.buttonColor}`}
                 >
                   {loading ? "Procesando..." : config.label}
                 </button>
@@ -128,7 +155,7 @@ export function IncidentActions({
             <button
               onClick={handleClose}
               disabled={loading}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Cerrando..." : "Confirmar cierre"}
             </button>
@@ -138,7 +165,8 @@ export function IncidentActions({
                 setResolution("");
                 setError("");
               }}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              disabled={loading}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -146,8 +174,11 @@ export function IncidentActions({
         </div>
       )}
 
+      {/* Error feedback */}
       {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
+        <div className="mt-2 rounded-md bg-red-50 border border-red-200 px-3 py-2">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
       )}
     </div>
   );

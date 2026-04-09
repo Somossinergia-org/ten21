@@ -25,6 +25,17 @@ const statusFlow = [
   { key: "CLOSED", label: "Cerrada" },
 ];
 
+function formatDate(date: Date | string | null) {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default async function IncidentDetailPage({
   params,
 }: {
@@ -56,14 +67,7 @@ export default async function IncidentDetailPage({
             </span>
           </div>
           <p className="mt-1 text-sm text-gray-500">
-            Registrada el{" "}
-            {new Date(incident.createdAt).toLocaleDateString("es-ES", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            Registrada el {formatDate(incident.createdAt)}
           </p>
         </div>
         <Link
@@ -135,8 +139,29 @@ export default async function IncidentDetailPage({
           <p className="text-xs font-medium uppercase text-gray-500">Tipo</p>
           <p className="mt-1 text-sm text-gray-900">{typeLabels[incident.type]}</p>
         </div>
-        {incident.resolution && (
+
+        {/* Traceability: reviewedAt */}
+        {incident.reviewedAt && (
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+            <p className="text-xs font-medium uppercase text-purple-700">Revisada</p>
+            <p className="mt-1 text-sm text-purple-900">{formatDate(incident.reviewedAt)}</p>
+          </div>
+        )}
+
+        {/* Traceability: closedAt + closedBy */}
+        {incident.closedAt && (
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <p className="text-xs font-medium uppercase text-green-700">Cerrada</p>
+            <p className="mt-1 text-sm text-green-900">{formatDate(incident.closedAt)}</p>
+            {incident.closedBy && (
+              <p className="text-xs text-green-700 mt-0.5">por {incident.closedBy.name}</p>
+            )}
+          </div>
+        )}
+
+        {/* Resolution */}
+        {incident.resolution && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 sm:col-span-2">
             <p className="text-xs font-medium uppercase text-green-700">Resolucion</p>
             <p className="mt-1 text-sm text-green-900">{incident.resolution}</p>
           </div>

@@ -16,6 +16,13 @@ export function getNextStatuses(current: IncidentStatus): IncidentStatus[] {
   return validTransitions[current] || [];
 }
 
+export function isValidTransition(
+  from: IncidentStatus,
+  to: IncidentStatus,
+): boolean {
+  return (validTransitions[from] || []).includes(to);
+}
+
 // ============================================================
 // QUERIES
 // ============================================================
@@ -61,6 +68,7 @@ export async function getIncident(id: string, tenantId: string) {
         },
       },
       reportedBy: { select: { name: true } },
+      closedBy: { select: { name: true } },
     },
   });
 }
@@ -73,6 +81,7 @@ export async function transitionIncident(
   id: string,
   tenantId: string,
   newStatus: IncidentStatus,
+  userId: string,
   resolution?: string,
 ) {
   const incident = await db.incident.findFirst({
@@ -83,8 +92,7 @@ export async function transitionIncident(
     throw new Error("Incidencia no encontrada");
   }
 
-  const allowed = getNextStatuses(incident.status);
-  if (!allowed.includes(newStatus)) {
+  if (!isValidTransition(incident.status, newStatus)) {
     throw new Error(
       `No se puede cambiar de ${incident.status} a ${newStatus}`,
     );
@@ -94,11 +102,22 @@ export async function transitionIncident(
     throw new Error("Se requiere una resolucion para cerrar la incidencia");
   }
 
+  // Build update data based on the target status
+  const now = new Date();
+  const updateData: Record<string, unknown> = { status: newStatus };
+
+  if (newStatus === "REVIEWED") {
+    updateData.reviewedAt = now;
+  }
+
+  if (newStatus === "CLOSED") {
+    updateData.closedAt = now;
+    updateData.closedById = userId;
+    updateData.resolution = resolution;
+  }
+
   return db.incident.update({
     where: { id },
-    data: {
-      status: newStatus,
-      ...(newStatus === "CLOSED" && resolution ? { resolution } : {}),
-    },
+    data: updateData,
   });
 }

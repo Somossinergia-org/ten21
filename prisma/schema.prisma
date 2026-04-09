@@ -51,7 +51,8 @@ model User {
 
   purchases          PurchaseOrder[]
   receptions         Reception[]
-  incidents          Incident[]
+  reportedIncidents  Incident[]  @relation("incidentReportedBy")
+  closedIncidents    Incident[]  @relation("incidentClosedBy")
   assignedDeliveries Delivery[]
 
   @@unique([tenantId, email])
@@ -224,8 +225,12 @@ model Incident {
   status       IncidentStatus @default(REGISTERED)
   description  String
   resolution   String?
+  reviewedAt   DateTime?
+  closedAt     DateTime?
+  closedById   String?
+  closedBy     User?          @relation("incidentClosedBy", fields: [closedById], references: [id])
   reportedById String
-  reportedBy   User           @relation(fields: [reportedById], references: [id])
+  reportedBy   User           @relation("incidentReportedBy", fields: [reportedById], references: [id])
   tenantId     String
   tenant       Tenant         @relation(fields: [tenantId], references: [id])
   createdAt    DateTime       @default(now())

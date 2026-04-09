@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole, getTenantId } from "@/lib/tenant";
+import { requireRole, getCurrentUser } from "@/lib/tenant";
 import { transitionIncidentSchema } from "@/lib/validations/incident";
 import * as incidentService from "@/services/incident.service";
 
@@ -16,18 +16,21 @@ export async function transitionIncidentAction(data: {
   resolution?: string;
 }): Promise<ActionResult> {
   await requireRole(["JEFE"]);
-  const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
+  // Validate input shape
   const parsed = transitionIncidentSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
   }
 
+  // Service validates the actual state transition
   try {
     await incidentService.transitionIncident(
       parsed.data.incidentId,
-      tenantId,
+      user.tenantId,
       parsed.data.newStatus,
+      user.id,
       parsed.data.resolution,
     );
 
