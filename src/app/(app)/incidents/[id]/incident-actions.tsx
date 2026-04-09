@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/providers/toast-provider";
 import { transitionIncidentAction } from "@/actions/incident.actions";
 
 type TransitionTarget = "NOTIFIED" | "REVIEWED" | "CLOSED";
@@ -37,6 +38,7 @@ export function IncidentActions({
   nextStatuses: TransitionTarget[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -70,6 +72,7 @@ export function IncidentActions({
 
       const config = transitionConfig[newStatus];
       setSuccess(`Estado cambiado: ${config.label.replace("Marcar como ", "")}`);
+      toast(`Incidencia ${config.label.replace("Marcar como ", "").toLowerCase()}`);
       router.refresh();
     },
     [incidentId, loading, router],
@@ -102,6 +105,7 @@ export function IncidentActions({
 
     setShowClose(false);
     setSuccess("Incidencia cerrada correctamente");
+    toast("Incidencia cerrada");
     router.refresh();
   }
 

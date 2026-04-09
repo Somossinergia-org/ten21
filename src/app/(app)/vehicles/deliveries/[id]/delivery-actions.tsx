@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/providers/toast-provider";
 import { startDeliveryAction, completeDeliveryAction } from "@/actions/delivery.actions";
 
 export function DeliveryActions({
@@ -12,6 +13,7 @@ export function DeliveryActions({
   currentStatus: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [startKm, setStartKm] = useState("");
@@ -32,6 +34,7 @@ export function DeliveryActions({
       setError(result.error || "Error");
       return;
     }
+    toast("Ruta iniciada");
     router.refresh();
   }
 
@@ -51,6 +54,7 @@ export function DeliveryActions({
       setError(result.error || "Error");
       return;
     }
+    toast(failed ? "Entrega marcada como fallida" : "Entrega completada", failed ? "error" : "success");
     router.refresh();
   }
 
@@ -59,7 +63,7 @@ export function DeliveryActions({
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Acciones</h3>
 
       {currentStatus === "ASSIGNED" && (
-        <div className="flex items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Km salida (opcional)</label>
             <input
@@ -74,7 +78,7 @@ export function DeliveryActions({
           <button
             onClick={handleStart}
             disabled={loading}
-            className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+            className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Iniciando..." : "Iniciar ruta"}
           </button>
@@ -82,7 +86,7 @@ export function DeliveryActions({
       )}
 
       {currentStatus === "IN_TRANSIT" && (
-        <div className="flex items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">Km llegada (opcional)</label>
             <input
@@ -97,14 +101,14 @@ export function DeliveryActions({
           <button
             onClick={() => handleComplete(false)}
             disabled={loading}
-            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Procesando..." : "Marcar entregada"}
           </button>
           <button
             onClick={() => handleComplete(true)}
             disabled={loading}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Procesando..." : "Marcar fallida"}
           </button>

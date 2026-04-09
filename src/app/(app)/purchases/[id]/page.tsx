@@ -84,7 +84,7 @@ export default async function PurchaseDetailPage({
       {/* Lines table */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Lineas del pedido</h2>
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

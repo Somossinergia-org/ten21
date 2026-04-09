@@ -29,7 +29,7 @@ export default async function ReceptionPage() {
         </Link>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
