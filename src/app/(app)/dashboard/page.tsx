@@ -64,16 +64,19 @@ export default async function DashboardPage() {
     alerts.incompleteOrders.length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* ============================================================ */}
       {/* BLOCK 0: GLOBAL STATUS */}
       {/* ============================================================ */}
       {totalAlerts > 0 ? (
-        <div className="rounded-2xl bg-red-600 px-8 py-6 text-center shadow-lg">
-          <p className="text-5xl font-black text-white">
+        <div className="rounded-2xl bg-red-700 px-8 py-8 text-center shadow-xl">
+          <p className="text-lg font-bold uppercase tracking-wider text-red-200">
+            Tienes
+          </p>
+          <p className="text-6xl font-black text-white mt-1">
             {totalAlerts}
           </p>
-          <p className="mt-1 text-lg font-bold uppercase tracking-wide text-red-100">
+          <p className="mt-1 text-xl font-black uppercase tracking-wide text-white">
             problema{totalAlerts !== 1 ? "s" : ""} importante{totalAlerts !== 1 ? "s" : ""}
           </p>
         </div>
@@ -103,11 +106,11 @@ export default async function DashboardPage() {
       {/* BLOCK 2: CRITICAL ALERTS (flat list) */}
       {/* ============================================================ */}
       {totalAlerts > 0 && (
-        <div className="rounded-xl border-2 border-red-200 bg-red-50 p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-red-800 mb-3">
-            Requieren atencion
+        <div className="rounded-xl border-2 border-red-200 bg-red-50 p-6">
+          <h2 className="text-sm font-black uppercase tracking-widest text-red-900 mb-4">
+            Problemas detectados
           </h2>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {alerts.openIncidents.map((inc) => (
               <AlertRow
                 key={`inc-${inc.id}`}
@@ -312,13 +315,13 @@ function KpiCard({ label, value, color, href }: { label: string; value: number; 
 
 function AlertRow({ href, dot, label, detail, tag }: { href: string; dot: string; label: string; detail: string; tag: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 rounded-lg bg-white px-4 py-2.5 hover:bg-red-100 transition-colors">
-      <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${dot}`} />
+    <Link href={href} className="flex items-center gap-3 rounded-lg bg-white px-4 py-3.5 cursor-pointer hover:bg-gray-100 transition-all duration-150 shadow-sm hover:shadow">
+      <span className={`h-3 w-3 flex-shrink-0 rounded-full ${dot}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
-        <p className="text-xs text-gray-500">{detail}</p>
+        <p className="text-sm font-semibold text-gray-900 truncate">{label}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{detail}</p>
       </div>
-      <span className="flex-shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+      <span className="flex-shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
         {tag}
       </span>
     </Link>
