@@ -1,336 +1,301 @@
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Ten21 — Tu tienda, bajo control",
-  description: "Sistema de automatización integral para tiendas de electrodomésticos",
-};
+import { useState } from "react";
 
-const slides = [
-  // 1 — APERTURA
-  {
-    bg: "bg-black",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-3xl mx-auto">
-        <p className="text-4xl sm:text-7xl font-black text-white leading-tight">
-          ¿Cuánto dinero se ha perdido en tu tienda este año sin que nadie lo viera?
-        </p>
-        <p className="mt-10 text-lg text-gray-500">
-          No por mala gestión. Sino porque nadie conecta la información.
-        </p>
-      </div>
-    ),
-  },
+// ============================================================
+// Full-screen presentation with keyboard/click navigation
+// Premium dark design. No scroll. One slide at a time.
+// ============================================================
 
-  // 2 — SITUACIÓN REAL
-  {
-    bg: "bg-gray-100",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-8 max-w-3xl mx-auto">
-        <p className="text-4xl sm:text-6xl font-black text-gray-900 text-center leading-tight">
-          Lunes, 9:15.<br />Llega un camión.
-        </p>
-        <div className="mt-10 space-y-4 w-full max-w-lg">
-          {[
-            "Juan descarga con prisas. Apunta lo que puede.",
-            "Tú llamas: \"¿Ha llegado todo?\"",
-            "\"Sí, creo que sí.\"",
-            "Una semana después, falta una pieza.",
-          ].map((line, i) => (
-            <p key={i} className={`text-lg ${i === 3 ? "font-bold text-red-700 mt-6" : "text-gray-700"}`}>
-              {line}
-            </p>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-
-  // 3 — PROBLEMA INVISIBLE
-  {
-    bg: "bg-white",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-8 max-w-4xl mx-auto">
-        <p className="text-3xl sm:text-5xl font-black text-gray-900 text-center leading-tight mb-12">
-          Lo que no se cruza, no se detecta.<br />
-          Lo que no se detecta, se pierde.
-        </p>
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          {[
-            { label: "Pedido", sub: "dice una cosa" },
-            { label: "Albarán", sub: "dice otra" },
-            { label: "Factura", sub: "dice otra" },
-            { label: "Banco", sub: "cobra lo que sea" },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3">
-              {i > 0 && <span className="text-2xl text-red-300">✕</span>}
-              <div className="rounded-xl border-2 border-gray-200 bg-gray-50 px-5 py-4 text-center w-[140px]">
-                <p className="text-sm font-black text-gray-900">{item.label}</p>
-                <p className="text-xs text-red-500 mt-1">{item.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-10 text-lg font-semibold text-gray-500 text-center">
-          Nadie compara nada. Y cada vez que pasa, se pierde dinero.
-        </p>
-      </div>
-    ),
-  },
-
-  // 4 — TENSIÓN
-  {
-    bg: "bg-red-950",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-2xl mx-auto">
-        <p className="text-5xl sm:text-7xl font-black text-white leading-tight">3</p>
-        <p className="text-2xl sm:text-3xl font-black text-white mt-2">frigoríficos pedidos.</p>
-        <div className="my-8 h-px w-32 bg-red-500/40 mx-auto" />
-        <p className="text-2xl sm:text-3xl font-bold text-red-300">2 llegaron. Uno con un golpe.</p>
-        <p className="text-2xl sm:text-3xl font-bold text-red-300 mt-2">Se pagaron 3.</p>
-        <div className="my-8 h-px w-32 bg-red-500/40 mx-auto" />
-        <p className="text-lg text-red-400">
-          Nadie lo vio. Nadie lo reclamó. Se perdió.
-        </p>
-      </div>
-    ),
-  },
-
-  // 5 — LA IDEA (alivio)
-  {
-    bg: "bg-blue-600",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-3xl mx-auto">
-        <p className="text-4xl sm:text-6xl font-black text-white leading-tight">
-          ¿Y si cada parte de tu negocio estuviera vigilada automáticamente?
-        </p>
-        <div className="mt-10 space-y-3">
-          <p className="text-lg text-blue-100">Sin instalar nada. Desde el navegador.</p>
-          <p className="text-lg text-blue-100">Sin cambiar tu forma de trabajar.</p>
-          <p className="text-lg text-blue-100">Se adapta a lo que ya haces.</p>
-        </div>
-      </div>
-    ),
-  },
-
-  // 6 — FLOW COMPLETO
-  {
-    bg: "bg-gray-950",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-6 max-w-5xl mx-auto">
-        <p className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3">El sistema completo</p>
-        <p className="text-3xl sm:text-4xl font-black text-white text-center mb-8">
-          Del pedido al cobro. Todo conectado.
-        </p>
-        {[
-          { title: "ENTRADA", color: "border-blue-500/30", accent: "text-blue-400", items: [
-            { n: "Necesidad", s: "venta o stock" }, { n: "Pedido", s: "proveedor + coste" }, { n: "Albarán", s: "escaneo" }, { n: "Chequeo", s: "móvil" },
-          ]},
-          { title: "VERIFICACIÓN", color: "border-orange-500/30", accent: "text-orange-400", items: [
-            { n: "Factura", s: "lectura auto" }, { n: "Cruce", s: "4 documentos" }, { n: "Coste", s: "esperado vs real" },
-          ]},
-          { title: "FINANZAS", color: "border-green-500/30", accent: "text-green-400", items: [
-            { n: "Pagos", s: "previsión" }, { n: "Banco", s: "conciliación" }, { n: "Ventas", s: "control" }, { n: "Rentabilidad", s: "márgenes" },
-          ]},
-          { title: "DIRECCIÓN", color: "border-purple-500/30", accent: "text-purple-400", items: [
-            { n: "Calendario", s: "automático" }, { n: "Base info", s: "histórico" }, { n: "Parte diario", s: "voz" }, { n: "PANEL", s: "control total" },
-          ]},
-        ].map((level, li) => (
-          <div key={li} className={`w-full rounded-xl border ${level.color} bg-gray-900/50 p-3 mb-2`}>
-            <div className="flex items-center gap-3">
-              <span className={`text-[10px] font-black uppercase tracking-widest ${level.accent} w-28 text-right flex-shrink-0`}>{level.title}</span>
-              <div className="flex-1 flex items-center gap-1.5 flex-wrap">
-                {level.items.map((item, ii) => (
-                  <div key={ii} className="flex items-center gap-1.5">
-                    {ii > 0 && <span className={`text-xs ${level.accent} opacity-40`}>→</span>}
-                    <div className="rounded-lg bg-gray-800 border border-gray-700 px-3 py-1.5 text-center">
-                      <p className="text-xs font-bold text-white leading-tight">{item.n}</p>
-                      <p className="text-[9px] text-gray-500">{item.s}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-        <p className="mt-4 text-xs text-gray-600">15 piezas conectadas. Todo converge en el panel.</p>
-      </div>
-    ),
-  },
-
-  // 7 — AGENTES
-  {
-    bg: "bg-white",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-8 max-w-4xl mx-auto">
-        <p className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">Vigilancia automática</p>
-        <p className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-10">
-          Cada parte del negocio tiene quien la vigile.
-        </p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 w-full max-w-3xl mb-6">
-          {[
-            { n: "Compras", s: "pedidos y costes", c: "border-blue-200 bg-blue-50" },
-            { n: "Recepción", s: "pedido vs realidad", c: "border-green-200 bg-green-50" },
-            { n: "Facturas", s: "lectura y validación", c: "border-purple-200 bg-purple-50" },
-            { n: "Tesorería", s: "pagos y banco", c: "border-yellow-200 bg-yellow-50" },
-            { n: "Ventas", s: "facturación", c: "border-cyan-200 bg-cyan-50" },
-            { n: "Rentabilidad", s: "márgenes reales", c: "border-orange-200 bg-orange-50" },
-            { n: "Agenda", s: "emails y fechas", c: "border-pink-200 bg-pink-50" },
-            { n: "Operaciones", s: "entregas y GPS", c: "border-emerald-200 bg-emerald-50" },
-          ].map((a, i) => (
-            <div key={i} className={`rounded-xl border-2 ${a.c} p-4 text-center`}>
-              <p className="text-sm font-black text-gray-900">{a.n}</p>
-              <p className="text-[10px] text-gray-500 mt-0.5">{a.s}</p>
-            </div>
-          ))}
-        </div>
-        {/* Supervisor */}
-        <div className="rounded-2xl border-2 border-gray-900 bg-gray-900 px-8 py-4 text-center">
-          <p className="text-base font-black text-white">SUPERVISOR</p>
-          <p className="text-xs text-gray-400 mt-0.5">Reúne todo · Prioriza · Resume · Avisa</p>
-        </div>
-        <p className="mt-6 text-sm text-gray-500 text-center">
-          No sustituyen a nadie. Les quitan carga. Y evitan que las cosas se pierdan.
-        </p>
-      </div>
-    ),
-  },
-
-  // 8 — MOMENTO WOW
-  {
-    bg: "bg-gray-50",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-8 max-w-3xl mx-auto">
-        <p className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">Ejemplo real</p>
-        <p className="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-8">
-          Paso a paso. Sin inventar nada.
-        </p>
-        <div className="w-full space-y-2">
-          {[
-            { t: "9:00", text: "Pedido: 3 frigoríficos + 2 lavavajillas", c: "border-blue-200 bg-blue-50" },
-            { t: "9:15", text: "Llega el camión. Juan abre la app.", c: "border-blue-200 bg-blue-50" },
-            { t: "9:18", text: "Marca: 2 frigoríficos (1 con golpe). 0 lavavajillas.", c: "border-orange-200 bg-orange-50" },
-            { t: "9:19", text: "El sistema crea 3 incidencias automáticas.", c: "border-red-200 bg-red-50" },
-            { t: "9:19", text: "Detecta que la factura no cuadrará.", c: "border-red-200 bg-red-50" },
-            { t: "9:20", text: "Pedido pasa a \"Parcial\".", c: "border-red-200 bg-red-50" },
-            { t: "9:30", text: "María abre el panel desde casa. Ve todo.", c: "border-green-200 bg-green-50" },
-            { t: "9:32", text: "Llama al proveedor. Con los datos delante.", c: "border-green-200 bg-green-50" },
-            { t: "9:35", text: "Marca como \"Notificada\". Queda registrado.", c: "border-green-200 bg-green-50" },
-          ].map((step, i) => (
-            <div key={i} className={`flex items-center gap-4 rounded-xl border-2 ${step.c} px-4 py-2.5`}>
-              <span className="text-xs font-mono font-bold text-gray-400 w-10 flex-shrink-0">{step.t}</span>
-              <p className="text-sm font-semibold text-gray-900">{step.text}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-5 text-sm font-bold text-gray-700 text-center">
-          20 minutos. Sin papel. Sin llamar al almacén. Sin perder nada.
-        </p>
-      </div>
-    ),
-  },
-
-  // 9 — DASHBOARD + PARTE DIARIO
-  {
-    bg: "bg-gray-900",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full px-8 max-w-4xl mx-auto">
-        <p className="text-3xl sm:text-5xl font-black text-white text-center mb-2">
-          El jefe no busca. Mira. Y decide.
-        </p>
-        <p className="text-sm text-gray-500 text-center mb-6">Cada mañana. Desde cualquier sitio.</p>
-        <div className="w-full rounded-2xl bg-gray-800 p-4 space-y-2.5 shadow-2xl">
-          <div className="rounded-xl bg-red-700 py-3 text-center">
-            <p className="text-xs text-red-200 font-bold uppercase">Tienes</p>
-            <p className="text-3xl font-black text-white mt-0.5">5 problemas importantes</p>
-          </div>
-          <div className="grid grid-cols-5 gap-1.5">
-            {[
-              { v: "3", l: "Incid.", c: "bg-red-500/20 text-red-400 border-red-500/20" },
-              { v: "3", l: "Pedidos", c: "bg-orange-500/20 text-orange-400 border-orange-500/20" },
-              { v: "1", l: "Recep.", c: "bg-green-500/20 text-green-400 border-green-500/20" },
-              { v: "1", l: "Vehic.", c: "bg-blue-500/20 text-blue-400 border-blue-500/20" },
-              { v: "2", l: "Entreg.", c: "bg-blue-500/20 text-blue-400 border-blue-500/20" },
-            ].map((k, i) => (
-              <div key={i} className={`rounded-lg border ${k.c} p-2 text-center`}>
-                <p className="text-2xl font-black">{k.v}</p>
-                <p className="text-[9px] font-bold uppercase opacity-70">{k.l}</p>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-1">
-            {[
-              "Frigorífico Bosch: falta 1 unidad",
-              "Factura no cuadra con albarán",
-              "Isabel Navarro: entrega fallida",
-            ].map((a, i) => (
-              <div key={i} className="flex items-center gap-2.5 rounded-lg bg-gray-700/40 px-3 py-2">
-                <span className="h-2 w-2 rounded-full bg-red-500 flex-shrink-0" />
-                <p className="text-xs text-gray-300">{a}</p>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="rounded-lg bg-gray-700/30 p-2.5">
-              <p className="text-[9px] font-bold text-gray-500 uppercase mb-1">Hoy</p>
-              {["REC-003 ● OK", "ENT-001 ● En ruta"].map((r, i) => (
-                <p key={i} className="text-[11px] text-gray-400">{r}</p>
-              ))}
-            </div>
-            <div className="rounded-lg bg-gray-700/30 p-2.5">
-              <p className="text-[9px] font-bold text-gray-500 uppercase mb-1">🔊 Parte diario</p>
-              <p className="text-[11px] text-gray-400 italic">
-                &quot;Hoy tienes 3 incidencias abiertas y una entrega fallida...&quot;
-              </p>
-            </div>
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-gray-600">Esto no es un diseño. Es el sistema real.</p>
-      </div>
-    ),
-  },
-
-  // 10 — CIERRE
-  {
-    bg: "bg-black",
-    content: (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8 max-w-3xl mx-auto">
-        <p className="text-4xl sm:text-6xl font-black text-white leading-tight">
-          Esto ya te está pasando.
-        </p>
-        <p className="text-4xl sm:text-6xl font-black text-blue-400 mt-4 leading-tight">
-          La diferencia es<br />si lo controlas o no.
-        </p>
-        <div className="mt-10 space-y-3 text-base text-gray-400">
-          <p>Funciona desde el navegador. Sin instalar nada.</p>
-          <p>Se adapta a cómo trabajas hoy.</p>
-          <p>Cada parte del negocio vigilada automáticamente.</p>
-        </div>
-        <div className="mt-10 h-px w-24 bg-gray-800 mx-auto" />
-        <p className="mt-8 text-xl font-bold text-white">
-          ¿Lo vemos funcionando con tus datos?
-        </p>
-        <p className="mt-6 text-xs text-gray-700">ten21.vercel.app</p>
-      </div>
-    ),
-  },
-];
+const TOTAL = 10;
 
 export default function PitchPage() {
+  const [current, setCurrent] = useState(0);
+
+  function next() { setCurrent((c) => Math.min(c + 1, TOTAL - 1)); }
+  function prev() { setCurrent((c) => Math.max(c - 1, 0)); }
+
   return (
-    <div className="scroll-smooth">
-      {slides.map((slide, i) => (
-        <section key={i} className={`min-h-screen w-full ${slide.bg} flex items-center justify-center relative`}>
-          {slide.content}
-          <div className="absolute bottom-4 right-6">
-            <span className={`text-xs font-mono ${
-              slide.bg === "bg-black" || slide.bg.includes("950") || slide.bg.includes("900") || slide.bg.includes("blue-600") || slide.bg.includes("red-950")
-                ? "text-white/10" : "text-gray-300"
-            }`}>
-              {i + 1}/{slides.length}
-            </span>
+    <div
+      className="h-screen w-screen bg-[#0a0a0a] text-white overflow-hidden select-none relative"
+      onClick={next}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowRight" || e.key === " ") next();
+        if (e.key === "ArrowLeft") prev();
+      }}
+      tabIndex={0}
+      suppressHydrationWarning
+    >
+      {/* Progress bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 z-50">
+        <div
+          className="h-full bg-blue-500 transition-all duration-500 ease-out"
+          style={{ width: `${((current + 1) / TOTAL) * 100}%` }}
+        />
+      </div>
+
+      {/* Navigation hint */}
+      <div className="absolute bottom-6 right-8 z-50 flex items-center gap-4">
+        <button onClick={(e) => { e.stopPropagation(); prev(); }} className="text-white/20 hover:text-white/60 text-2xl transition-colors">←</button>
+        <span className="text-white/20 text-xs font-mono">{current + 1}/{TOTAL}</span>
+        <button onClick={(e) => { e.stopPropagation(); next(); }} className="text-white/20 hover:text-white/60 text-2xl transition-colors">→</button>
+      </div>
+
+      {/* ============================================= */}
+      {/* SLIDES */}
+      {/* ============================================= */}
+
+      {/* 1 — HOOK */}
+      <Slide active={current === 0}>
+        <div className="flex flex-col items-center justify-center h-full text-center px-12">
+          <p className="text-[clamp(1.5rem,5vw,4.5rem)] font-black leading-[1.1] max-w-4xl">
+            Cada mes tu tienda pierde dinero
+            <br />
+            <span className="text-red-500">y nadie se da cuenta.</span>
+          </p>
+        </div>
+      </Slide>
+
+      {/* 2 — ESCENA */}
+      <Slide active={current === 1}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-3xl mx-auto">
+          <p className="text-blue-400 text-sm font-bold uppercase tracking-[0.3em] mb-8">ESCENA REAL</p>
+          <div className="space-y-6 text-center">
+            <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-bold text-white/90">Llega un camión con 3 frigoríficos.</p>
+            <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-bold text-white/60">Llegan 2. Uno tiene un golpe.</p>
+            <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-bold text-white/40">La factura cobra 3.</p>
+            <div className="pt-4">
+              <p className="text-[clamp(1.2rem,3vw,2.2rem)] font-black text-red-500">Nadie se entera.</p>
+            </div>
           </div>
-        </section>
-      ))}
+        </div>
+      </Slide>
+
+      {/* 3 — POR QUÉ */}
+      <Slide active={current === 2}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-4xl mx-auto">
+          <p className="text-[clamp(1.5rem,4vw,3.5rem)] font-black text-center leading-[1.15] mb-12">
+            Porque la información de tu negocio
+            <br />
+            <span className="text-orange-400">no está conectada.</span>
+          </p>
+          <div className="flex items-center gap-5">
+            {["Pedido", "Albarán", "Factura", "Banco"].map((doc, i) => (
+              <div key={i} className="flex items-center gap-5">
+                {i > 0 && <span className="text-red-500/50 text-3xl font-light">/</span>}
+                <div className="border border-white/10 rounded-2xl px-6 py-4 bg-white/5">
+                  <p className="text-lg font-bold text-white/80">{doc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-white/30 text-lg mt-10">Cada documento va por su lado. Nadie los cruza.</p>
+        </div>
+      </Slide>
+
+      {/* 4 — DATO */}
+      <Slide active={current === 3}>
+        <div className="flex flex-col items-center justify-center h-full text-center px-12">
+          <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] mb-6">EN UNA TIENDA MEDIA</p>
+          <p className="text-[clamp(3rem,10vw,10rem)] font-black leading-none text-white">3 de 100</p>
+          <p className="text-[clamp(1rem,2.5vw,1.8rem)] text-white/50 mt-4 font-medium">
+            recepciones tienen errores que nadie detecta.
+          </p>
+          <p className="text-red-500/80 text-lg mt-8 font-semibold">
+            Mercancía que falta. Productos dañados. Facturas que no cuadran.
+          </p>
+        </div>
+      </Slide>
+
+      {/* 5 — SOLUCIÓN */}
+      <Slide active={current === 4}>
+        <div className="flex flex-col items-center justify-center h-full text-center px-12">
+          <div className="h-16 w-16 rounded-full bg-blue-500 mb-8" />
+          <p className="text-[clamp(1.5rem,4.5vw,4rem)] font-black leading-[1.1] max-w-3xl">
+            Un sistema que vigila
+            <br />
+            cada parte de tu negocio.
+          </p>
+          <p className="text-white/40 text-lg mt-8 max-w-lg">
+            Cruza documentos. Detecta errores. Te avisa.
+            <br />Sin instalar nada. Desde el navegador.
+          </p>
+        </div>
+      </Slide>
+
+      {/* 6 — CÓMO FUNCIONA */}
+      <Slide active={current === 5}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-5xl mx-auto">
+          <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] mb-10">ASÍ FUNCIONA</p>
+          <div className="w-full grid grid-cols-5 gap-3">
+            {[
+              { label: "Pedido", desc: "Lo que pides", color: "border-blue-500/40" },
+              { label: "Recepción", desc: "Lo que llega", color: "border-blue-500/40" },
+              { label: "Verificación", desc: "Se cruza todo", color: "border-orange-500/40" },
+              { label: "Finanzas", desc: "Pagos y banco", color: "border-green-500/40" },
+              { label: "Panel", desc: "Tú decides", color: "border-white/40" },
+            ].map((step, i) => (
+              <div key={i} className="relative">
+                {i > 0 && (
+                  <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-white/15 text-xl">→</div>
+                )}
+                <div className={`border ${step.color} rounded-2xl p-5 text-center bg-white/[0.03] h-full`}>
+                  <p className="text-white/90 font-bold text-sm">{step.label}</p>
+                  <p className="text-white/30 text-xs mt-2">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex items-center gap-3 flex-wrap justify-center">
+            {["Albarán", "Chequeo", "Factura", "Coste", "Banco", "Ventas", "Rentabilidad", "Calendario"].map((sub) => (
+              <span key={sub} className="text-[11px] text-white/20 bg-white/5 rounded-full px-3 py-1">{sub}</span>
+            ))}
+          </div>
+          <p className="text-white/25 text-sm mt-8">15 piezas conectadas. Todo automático.</p>
+        </div>
+      </Slide>
+
+      {/* 7 — AGENTES */}
+      <Slide active={current === 6}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-4xl mx-auto">
+          <p className="text-[clamp(1.3rem,3.5vw,2.8rem)] font-black text-center leading-[1.15] mb-12">
+            8 agentes vigilan tu negocio.
+            <br />
+            <span className="text-blue-400">Tú solo miras el resultado.</span>
+          </p>
+          <div className="grid grid-cols-4 gap-3 w-full">
+            {[
+              { n: "Compras", c: "bg-blue-500" },
+              { n: "Recepción", c: "bg-emerald-500" },
+              { n: "Facturas", c: "bg-purple-500" },
+              { n: "Tesorería", c: "bg-yellow-500" },
+              { n: "Ventas", c: "bg-cyan-500" },
+              { n: "Rentabilidad", c: "bg-orange-500" },
+              { n: "Agenda", c: "bg-pink-500" },
+              { n: "Operaciones", c: "bg-green-500" },
+            ].map((a) => (
+              <div key={a.n} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3">
+                <div className={`h-3 w-3 rounded-full ${a.c} flex-shrink-0`} />
+                <p className="text-sm font-semibold text-white/80">{a.n}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 border border-white/10 rounded-2xl px-8 py-4 bg-white/[0.03] text-center">
+            <p className="text-lg font-black text-white">Supervisor</p>
+            <p className="text-xs text-white/30 mt-1">Reúne todo. Prioriza. Te dice qué mirar.</p>
+          </div>
+        </div>
+      </Slide>
+
+      {/* 8 — EJEMPLO */}
+      <Slide active={current === 7}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-3xl mx-auto">
+          <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] mb-8">EJEMPLO REAL</p>
+          <div className="w-full space-y-1.5">
+            {[
+              { t: "9:00", text: "Pedido: 3 frigoríficos + 2 lavavajillas", o: "1" },
+              { t: "9:15", text: "Llega el camión. Juan abre la app.", o: "0.85" },
+              { t: "9:18", text: "Marca: 2 frigoríficos (1 con golpe). 0 lavavajillas.", o: "0.7" },
+              { t: "9:19", text: "El sistema crea 3 incidencias.", color: "text-red-400", o: "1" },
+              { t: "9:19", text: "Detecta que la factura no cuadrará.", color: "text-red-400", o: "1" },
+              { t: "9:30", text: "María ve todo en el panel. Desde casa.", color: "text-green-400", o: "1" },
+              { t: "9:32", text: "Llama al proveedor. Con datos.", color: "text-green-400", o: "1" },
+              { t: "9:35", text: "Queda registrado. No se pierde nada.", color: "text-green-400", o: "1" },
+            ].map((s, i) => (
+              <div key={i} className="flex items-center gap-5">
+                <span className="text-xs font-mono text-white/25 w-10 flex-shrink-0 text-right">{s.t}</span>
+                <div className="h-px flex-grow-0 w-4 bg-white/10" />
+                <p className={`text-base font-medium ${s.color || "text-white"}`} style={{ opacity: s.o }}>
+                  {s.text}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="text-white/30 text-sm mt-10">Antes tardaba una semana. Si es que alguien se acordaba.</p>
+        </div>
+      </Slide>
+
+      {/* 9 — DASHBOARD */}
+      <Slide active={current === 8}>
+        <div className="flex flex-col items-center justify-center h-full px-12 max-w-4xl mx-auto">
+          <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] mb-3">EL PANEL</p>
+          <p className="text-[clamp(1.3rem,3vw,2.5rem)] font-black text-center mb-8">
+            10 segundos. Sabe todo.
+          </p>
+          <div className="w-full rounded-3xl bg-white/[0.04] border border-white/10 p-6 space-y-4">
+            {/* Alert */}
+            <div className="rounded-2xl bg-red-600 py-4 text-center">
+              <p className="text-sm text-red-100 font-bold uppercase tracking-wider">Tienes</p>
+              <p className="text-4xl font-black text-white">5 problemas</p>
+            </div>
+            {/* KPIs */}
+            <div className="grid grid-cols-5 gap-2">
+              {[
+                { v: "3", l: "Incidencias", c: "text-red-400" },
+                { v: "3", l: "Pedidos", c: "text-orange-400" },
+                { v: "1", l: "Recepciones", c: "text-green-400" },
+                { v: "1", l: "Vehículos", c: "text-blue-400" },
+                { v: "2", l: "Entregas", c: "text-blue-400" },
+              ].map((k, i) => (
+                <div key={i} className="text-center py-2">
+                  <p className={`text-3xl font-black ${k.c}`}>{k.v}</p>
+                  <p className="text-[10px] text-white/30 font-bold uppercase mt-1">{k.l}</p>
+                </div>
+              ))}
+            </div>
+            {/* Alerts list */}
+            <div className="space-y-1.5">
+              {[
+                "Frigorífico Bosch — falta 1 unidad",
+                "Isabel Navarro — entrega fallida",
+                "PED-002 — recibido parcialmente",
+              ].map((a, i) => (
+                <div key={i} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-2.5">
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <p className="text-sm text-white/60">{a}</p>
+                </div>
+              ))}
+            </div>
+            {/* Audio */}
+            <div className="rounded-xl bg-white/5 p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg">▶</div>
+              <div>
+                <p className="text-xs font-bold text-white/50">PARTE DIARIO</p>
+                <p className="text-xs text-white/30 italic">&quot;Hoy tienes 3 incidencias abiertas y una entrega fallida...&quot;</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Slide>
+
+      {/* 10 — CIERRE */}
+      <Slide active={current === 9}>
+        <div className="flex flex-col items-center justify-center h-full text-center px-12 max-w-3xl mx-auto">
+          <p className="text-[clamp(1.5rem,4.5vw,3.5rem)] font-black leading-[1.15]">
+            Esto ya te está pasando.
+          </p>
+          <p className="text-[clamp(1.5rem,4.5vw,3.5rem)] font-black leading-[1.15] text-blue-400 mt-3">
+            La diferencia es si lo controlas o no.
+          </p>
+          <div className="mt-12 h-px w-16 bg-white/10 mx-auto" />
+          <p className="text-xl font-bold text-white/80 mt-10">
+            ¿Lo vemos funcionando con tus datos?
+          </p>
+          <p className="text-sm text-white/20 mt-8">ten21.vercel.app</p>
+        </div>
+      </Slide>
+    </div>
+  );
+}
+
+function Slide({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      className={`absolute inset-0 transition-all duration-700 ease-out ${
+        active ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
+      }`}
+    >
+      {children}
     </div>
   );
 }
