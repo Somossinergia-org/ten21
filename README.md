@@ -75,8 +75,8 @@ npm run dev
 
 | Rol | Acceso |
 |-----|--------|
-| **JEFE** | Todo: dashboard, compras, productos, proveedores, clientes, recepcion, incidencias, vehiculos, entregas, finanzas, IA, usuarios, estadisticas |
-| **ALMACEN** | Recepcion (crear), incidencias (lectura), notificaciones |
+| **JEFE** | Todo: ventas, clientes, posventa, compras, productos, proveedores, inventario, recepcion, incidencias, vehiculos, entregas, finanzas, IA, usuarios, dashboard |
+| **ALMACEN** | Inventario (lectura), recepcion (crear), incidencias (lectura), notificaciones |
 | **REPARTO** | Vehiculos (ver), entregas (propias), calendario (propio), notificaciones |
 
 ## Credenciales demo
@@ -105,9 +105,32 @@ Delivery (ASSIGNED->IN_TRANSIT->DELIVERED/FAILED) + Vehicle (AVAILABLE<->IN_USE)
 - Control de kilometraje (startKm, endKm)
 - Calendario de entregas con FullCalendar
 
+### Ventas (V3)
+```
+SalesOrder (DRAFT->CONFIRMED->RESERVED->IN_DELIVERY->DELIVERED)
+```
+- Pedidos de venta con lineas, precios, costes y margen estimado
+- Reserva automatica de stock al confirmar
+- Cancelacion controlada con liberacion de reserva
+- Vinculacion a entregas y tickets posventa
+
+### Stock Ligero (V3)
+- ProductInventory: onHand, reserved, available por producto
+- StockMovement: trazabilidad inmutable (RECEPTION_IN, SALE_RESERVE, SALE_RELEASE, DELIVERY_OUT, MANUAL_ADJUSTMENT)
+- Recepciones incrementan stock automaticamente
+- Entregas completadas decrementan stock
+- Ajuste manual solo JEFE con motivo obligatorio
+
+### Posventa (V3)
+- Tickets: DAMAGE, MISSING_ITEM, INSTALLATION, WARRANTY, RETURN, OTHER
+- Prioridades: LOW, NORMAL, HIGH, URGENT
+- Estados: OPEN -> IN_PROGRESS -> WAITING_SUPPLIER -> RESOLVED -> CLOSED
+- Vinculable a cliente, venta y/o entrega
+- Notificacion automatica para tickets HIGH/URGENT
+
 ### Clientes
-- Entidad centralizada con historial de entregas
-- Vista 360: datos, direccion, entregas pasadas
+- Entidad centralizada con historial de entregas y ventas
+- Vista 360: datos, direccion, entregas, ventas, tickets posventa
 
 ### Notificaciones
 - Alertas internas para: incidencias, entregas fallidas, pedidos parciales, facturas discrepantes
@@ -140,23 +163,24 @@ src/
   components/           # UI (layout, agent, attachments, timeline, dashboard)
   lib/                  # Auth, DB, tenant helpers, validaciones Zod
 prisma/
-  schema.prisma         # 18 modelos, 11 enums
+  schema.prisma         # 24 modelos, 18 enums
   seed.ts               # Datos demo TodoMueble Guardamar
   backfill-customers.ts # Migracion Delivery->Customer
-  migrations/
+  migrations/           # 8 migraciones
 tests/
-  unit/                 # 68 tests (validaciones, estado, tipos)
+  unit/                 # 98 tests (validaciones, estados, tipos)
 docs/
-  plan_arquitectura.md
-  reglas-dominio.md
-  roadmap-v2.md
+  plan_arquitectura.md, plan_arquitectura_v3.md
+  reglas-dominio.md, reglas-dominio-v3.md
+  roadmap-v2.md, roadmap-v3.md
 ```
 
 ## Limitaciones actuales
 
 - Adjuntos almacenados en base64 en BD (max 2MB)
 - Sin notificaciones externas (email/push)
-- Sin inventario/stock
-- Sin ventas/presupuestos/facturacion a cliente
+- Sin facturacion fiscal a cliente (solo SalesOrder)
 - Sin 2FA ni rate limiting
 - Sin retry para llamadas a Gemini
+- Stock es single-almacen por tenant (sin multi-sede)
+- Devolucion posventa no revierte stock automaticamente
