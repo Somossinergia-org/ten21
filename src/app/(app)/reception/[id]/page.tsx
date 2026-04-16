@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole, getTenantId } from "@/lib/tenant";
 import * as receptionService from "@/services/reception.service";
+import * as activityService from "@/services/activity.service";
+import * as attachmentService from "@/services/attachment.service";
+import { AttachmentsSection } from "@/components/attachments/attachments-section";
+import { ActivityTimeline } from "@/components/timeline/activity-timeline";
 
 const receptionStatusLabels: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Pendiente", color: "bg-gray-100 text-gray-700" },
@@ -35,6 +39,11 @@ export default async function ReceptionDetailPage({
 
   const reception = await receptionService.getReception(id, tenantId);
   if (!reception) notFound();
+
+  const [attachments, activityLogs] = await Promise.all([
+    attachmentService.listForEntity(tenantId, "RECEPTION", id),
+    activityService.listForEntity(tenantId, "Reception", id),
+  ]);
 
   const status = receptionStatusLabels[reception.status] || {
     label: reception.status,
@@ -187,6 +196,12 @@ export default async function ReceptionDetailPage({
           </div>
         </div>
       )}
+
+      {/* Attachments */}
+      <AttachmentsSection entity="RECEPTION" entityId={reception.id} attachments={attachments} />
+
+      {/* Activity Timeline */}
+      <ActivityTimeline logs={activityLogs} />
     </div>
   );
 }

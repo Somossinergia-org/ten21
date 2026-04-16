@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole, getTenantId } from "@/lib/tenant";
 import * as purchaseService from "@/services/purchase.service";
+import * as activityService from "@/services/activity.service";
+import * as attachmentService from "@/services/attachment.service";
 import { SendOrderButton } from "./send-order-button";
+import { AttachmentsSection } from "@/components/attachments/attachments-section";
+import { ActivityTimeline } from "@/components/timeline/activity-timeline";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   DRAFT: { label: "Borrador", color: "bg-gray-100 text-gray-700" },
@@ -30,6 +34,11 @@ export default async function PurchaseDetailPage({
   if (!order) {
     notFound();
   }
+
+  const [attachments, activityLogs] = await Promise.all([
+    attachmentService.listForEntity(tenantId, "PURCHASE_ORDER", id),
+    activityService.listForEntity(tenantId, "PurchaseOrder", id),
+  ]);
 
   const status = statusLabels[order.status] || { label: order.status, color: "bg-gray-100" };
 
@@ -113,6 +122,12 @@ export default async function PurchaseDetailPage({
           </table>
         </div>
       </div>
+
+      {/* Attachments */}
+      <AttachmentsSection entity="PURCHASE_ORDER" entityId={order.id} attachments={attachments} />
+
+      {/* Activity Timeline */}
+      <ActivityTimeline logs={activityLogs} />
     </div>
   );
 }

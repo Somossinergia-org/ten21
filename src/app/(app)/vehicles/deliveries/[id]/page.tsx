@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole, getTenantId } from "@/lib/tenant";
 import * as deliveryService from "@/services/delivery.service";
+import * as activityService from "@/services/activity.service";
+import * as attachmentService from "@/services/attachment.service";
 import { DeliveryActions } from "./delivery-actions";
+import { AttachmentsSection } from "@/components/attachments/attachments-section";
+import { ActivityTimeline } from "@/components/timeline/activity-timeline";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Pendiente", color: "bg-gray-100 text-gray-700" },
@@ -23,6 +27,11 @@ export default async function DeliveryDetailPage({
 
   const delivery = await deliveryService.getDelivery(id, tenantId);
   if (!delivery) notFound();
+
+  const [attachments, activityLogs] = await Promise.all([
+    attachmentService.listForEntity(tenantId, "DELIVERY", id),
+    activityService.listForEntity(tenantId, "Delivery", id),
+  ]);
 
   const status = statusLabels[delivery.status] || { label: delivery.status, color: "bg-gray-100" };
 
@@ -116,6 +125,12 @@ export default async function DeliveryDetailPage({
           />
         </div>
       )}
+
+      {/* Attachments */}
+      <AttachmentsSection entity="DELIVERY" entityId={delivery.id} attachments={attachments} />
+
+      {/* Activity Timeline */}
+      <ActivityTimeline logs={activityLogs} />
     </div>
   );
 }

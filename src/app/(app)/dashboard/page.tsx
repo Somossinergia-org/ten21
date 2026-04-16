@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireRole, getTenantId } from "@/lib/tenant";
 import * as dashboardService from "@/services/dashboard.service";
+import * as sparklineService from "@/services/sparkline.service";
+import { DashboardSparklines } from "./dashboard-sparklines";
 
 // ============================================================
 // STATUS CONFIGS
@@ -51,11 +53,13 @@ export default async function DashboardPage() {
   await requireRole(["JEFE"]);
   const tenantId = await getTenantId();
 
-  const [kpis, alerts, todayOps, recent] = await Promise.all([
+  const [kpis, alerts, todayOps, recent, incidentsByDay, deliveriesByDay] = await Promise.all([
     dashboardService.getKpis(tenantId),
     dashboardService.getAlerts(tenantId),
     dashboardService.getTodayOps(tenantId),
     dashboardService.getRecent(tenantId),
+    sparklineService.getIncidentsByDay(tenantId),
+    sparklineService.getDeliveriesByDay(tenantId),
   ]);
 
   const totalAlerts =
@@ -101,6 +105,9 @@ export default async function DashboardPage() {
         <KpiCard label="Vehiculos" value={kpis.vehiclesInUse} color={kpis.vehiclesInUse > 0 ? "blue" : "gray"} href="/vehicles" />
         <KpiCard label="Entregas" value={kpis.activeDeliveries} color={kpis.activeDeliveries > 0 ? "blue" : "gray"} href="/vehicles/deliveries" />
       </div>
+
+      {/* Sparklines */}
+      <DashboardSparklines incidentsByDay={incidentsByDay} deliveriesByDay={deliveriesByDay} />
 
       {/* ============================================================ */}
       {/* BLOCK 2: CRITICAL ALERTS (flat list) */}

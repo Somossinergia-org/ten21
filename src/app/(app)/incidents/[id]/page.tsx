@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole, getCurrentUser } from "@/lib/tenant";
 import * as incidentService from "@/services/incident.service";
+import * as activityService from "@/services/activity.service";
+import * as attachmentService from "@/services/attachment.service";
 import { IncidentActions } from "./incident-actions";
+import { AttachmentsSection } from "@/components/attachments/attachments-section";
+import { ActivityTimeline } from "@/components/timeline/activity-timeline";
 
 const typeLabels: Record<string, string> = {
   QUANTITY_MISMATCH: "Diferencia de cantidad",
@@ -47,6 +51,11 @@ export default async function IncidentDetailPage({
 
   const incident = await incidentService.getIncident(id, user.tenantId);
   if (!incident) notFound();
+
+  const [attachments, activityLogs] = await Promise.all([
+    attachmentService.listForEntity(user.tenantId, "INCIDENT", id),
+    activityService.listForEntity(user.tenantId, "Incident", id),
+  ]);
 
   const status = statusLabels[incident.status] || { label: incident.status, color: "bg-gray-100" };
   const nextStatuses = incidentService.getNextStatuses(incident.status) as
@@ -187,6 +196,12 @@ export default async function IncidentDetailPage({
           </p>
         </div>
       )}
+
+      {/* Attachments */}
+      <AttachmentsSection entity="INCIDENT" entityId={incident.id} attachments={attachments} />
+
+      {/* Activity Timeline */}
+      <ActivityTimeline logs={activityLogs} />
     </div>
   );
 }
