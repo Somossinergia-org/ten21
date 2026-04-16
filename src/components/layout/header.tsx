@@ -8,9 +8,9 @@ import type { Role } from "@prisma/client";
 
 const roleLabels: Record<Role, string> = { JEFE: "Jefe", ALMACEN: "Almacen", REPARTO: "Reparto" };
 
-type HeaderProps = { userName: string; userRole: Role; tenantName: string; openIncidents?: number };
+type HeaderProps = { userName: string; userRole: Role; tenantName: string; openIncidents?: number; unreadNotifications?: number };
 
-export function Header({ userName, userRole, tenantName, openIncidents = 0 }: HeaderProps) {
+export function Header({ userName, userRole, tenantName, openIncidents = 0, unreadNotifications = 0 }: HeaderProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b border-[#1a2d4a] bg-[#050a14]/80 backdrop-blur-md px-4 lg:px-6">
       <div className="hidden sm:block">
@@ -23,6 +23,17 @@ export function Header({ userName, userRole, tenantName, openIncidents = 0 }: He
       </div>
 
       <div className="flex items-center gap-2">
+        {unreadNotifications > 0 && (
+          <Link href="/notifications"
+            className="relative flex items-center gap-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1.5 text-xs font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+            <Bell size={13} />
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
+            </span>
+            <span className="hidden sm:inline">{unreadNotifications}</span>
+          </Link>
+        )}
         {openIncidents > 0 && (
           <Link href="/incidents?status=REGISTERED"
             className="relative flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/20 px-2.5 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors">

@@ -1,16 +1,19 @@
-import { requireAuth } from "@/lib/tenant";
+import { requireAuth, getTenantId, getCurrentUser } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
+import * as notifService from "@/services/notification.service";
+import { NotificationsClient } from "./notifications-client";
 
 export default async function NotificationsPage() {
   await requireAuth();
+  const tenantId = await getTenantId();
+  const me = await getCurrentUser();
+
+  const notifications = await notifService.listForUser(tenantId, me.id);
 
   return (
     <div>
       <PageHeader title="Notificaciones" />
-      <div className="mt-6 rounded-xl border border-[#1a2d4a] bg-[#0a1628]/50 p-12 text-center">
-        <p className="text-sm text-slate-400">Centro de notificaciones en construccion</p>
-        <p className="mt-1 text-xs text-slate-600">Alertas de incidencias, entregas fallidas, pedidos parciales</p>
-      </div>
+      <NotificationsClient notifications={notifications} />
     </div>
   );
 }

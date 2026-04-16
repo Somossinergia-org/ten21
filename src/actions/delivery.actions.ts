@@ -9,10 +9,12 @@ import {
 } from "@/lib/validations/delivery";
 import * as deliveryService from "@/services/delivery.service";
 import * as activity from "@/services/activity.service";
+import * as notifService from "@/services/notification.service";
 
 type ActionResult = { success: boolean; error?: string };
 
 export async function createDeliveryAction(data: {
+  customerId?: string;
   customerName: string;
   customerPhone?: string;
   customerAddress: string;
@@ -21,6 +23,7 @@ export async function createDeliveryAction(data: {
   vehicleId: string;
   assignedToId: string;
   notes?: string;
+  lines?: { productId?: string; description: string; quantity: number; notes?: string }[];
 }): Promise<ActionResult & { deliveryId?: string }> {
   await requireRole(["JEFE", "REPARTO"]);
   const tenantId = await getTenantId();
@@ -102,6 +105,18 @@ export async function completeDeliveryAction(data: {
       entityId: parsed.data.deliveryId,
       details: parsed.data.endKm ? { endKm: parsed.data.endKm } : undefined,
     });
+
+    // Notify on failure
+    if (parsed.data.failed) {
+      const delivery = await deliveryService.getDelivery(parsed.data.deliveryId, tenantId);
+      if (delivery) {
+        await notifService.notifyDeliveryFailed(
+          tenantId, delivery.deliveryNumber, delivery.customerName,
+          delivery.notes, delivery.id,
+        );
+      }
+    }
+
     revalidatePath("/vehicles");
     return { success: true };
   } catch (e: unknown) {

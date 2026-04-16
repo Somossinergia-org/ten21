@@ -36,6 +36,17 @@ export async function listProducts(tenantId: string) {
   });
 }
 
+export async function getAllProducts(tenantId: string) {
+  return db.product.findMany({
+    where: { tenantId },
+    orderBy: { ref: "asc" },
+  });
+}
+
+export async function getProduct(id: string, tenantId: string) {
+  return db.product.findFirst({ where: { id, tenantId } });
+}
+
 export async function createProduct(data: CreateProductInput, tenantId: string) {
   return db.product.create({
     data: {
@@ -43,6 +54,28 @@ export async function createProduct(data: CreateProductInput, tenantId: string) 
       tenantId,
     },
   });
+}
+
+export async function updateProduct(id: string, tenantId: string, data: {
+  name?: string; description?: string; salePrice?: number | null;
+  category?: string; brand?: string;
+}) {
+  return db.product.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.salePrice !== undefined && { salePrice: data.salePrice }),
+      ...(data.category !== undefined && { category: data.category }),
+      ...(data.brand !== undefined && { brand: data.brand }),
+    },
+  });
+}
+
+export async function toggleProductActive(id: string, tenantId: string) {
+  const p = await db.product.findFirst({ where: { id, tenantId } });
+  if (!p) throw new Error("Producto no encontrado");
+  return db.product.update({ where: { id }, data: { active: !p.active } });
 }
 
 // ============================================================
@@ -54,6 +87,26 @@ export async function listSuppliers(tenantId: string) {
     where: { tenantId, active: true },
     orderBy: { name: "asc" },
   });
+}
+
+export async function getAllSuppliers(tenantId: string) {
+  return db.supplier.findMany({
+    where: { tenantId },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function updateSupplier(id: string, tenantId: string, data: {
+  name?: string; phone?: string; email?: string; taxId?: string;
+  commercialTerms?: string; paymentTerms?: string; notes?: string;
+}) {
+  return db.supplier.update({ where: { id }, data });
+}
+
+export async function toggleSupplierActive(id: string, tenantId: string) {
+  const s = await db.supplier.findFirst({ where: { id, tenantId } });
+  if (!s) throw new Error("Proveedor no encontrado");
+  return db.supplier.update({ where: { id }, data: { active: !s.active } });
 }
 
 export async function createSupplier(data: CreateSupplierInput, tenantId: string) {

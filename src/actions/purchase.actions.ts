@@ -51,6 +51,40 @@ export async function createProductAction(formData: FormData): Promise<ActionRes
   }
 }
 
+export async function updateProductAction(data: {
+  id: string; name?: string; description?: string;
+  salePrice?: number | null; category?: string; brand?: string;
+}): Promise<ActionResult> {
+  await requireRole(["JEFE"]);
+  const tenantId = await getTenantId();
+  const me = await getCurrentUser();
+
+  try {
+    const product = await purchaseService.updateProduct(data.id, tenantId, data);
+    await activity.log({
+      tenantId, userId: me.id, userName: me.name,
+      action: "product.updated", entity: "Product",
+      entityId: product.id, entityRef: product.ref,
+    });
+    revalidatePath("/purchases/products");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Error al actualizar el producto" };
+  }
+}
+
+export async function toggleProductActiveAction(id: string): Promise<ActionResult> {
+  await requireRole(["JEFE"]);
+  const tenantId = await getTenantId();
+  try {
+    await purchaseService.toggleProductActive(id, tenantId);
+    revalidatePath("/purchases/products");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Error al cambiar estado" };
+  }
+}
+
 // ============================================================
 // SUPPLIERS
 // ============================================================
@@ -87,6 +121,40 @@ export async function createSupplierAction(formData: FormData): Promise<ActionRe
       return { success: false, error: "Ya existe un proveedor con ese codigo" };
     }
     return { success: false, error: "Error al crear el proveedor" };
+  }
+}
+
+export async function updateSupplierAction(data: {
+  id: string; name?: string; phone?: string; email?: string;
+  taxId?: string; commercialTerms?: string; paymentTerms?: string; notes?: string;
+}): Promise<ActionResult> {
+  await requireRole(["JEFE"]);
+  const tenantId = await getTenantId();
+  const me = await getCurrentUser();
+
+  try {
+    const supplier = await purchaseService.updateSupplier(data.id, tenantId, data);
+    await activity.log({
+      tenantId, userId: me.id, userName: me.name,
+      action: "supplier.updated", entity: "Supplier",
+      entityId: supplier.id, entityRef: supplier.code,
+    });
+    revalidatePath("/purchases/suppliers");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Error al actualizar el proveedor" };
+  }
+}
+
+export async function toggleSupplierActiveAction(id: string): Promise<ActionResult> {
+  await requireRole(["JEFE"]);
+  const tenantId = await getTenantId();
+  try {
+    await purchaseService.toggleSupplierActive(id, tenantId);
+    revalidatePath("/purchases/suppliers");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Error al cambiar estado" };
   }
 }
 

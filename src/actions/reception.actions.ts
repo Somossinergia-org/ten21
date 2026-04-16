@@ -5,6 +5,7 @@ import { requireRole, getTenantId, getCurrentUser } from "@/lib/tenant";
 import { createReceptionSchema } from "@/lib/validations/reception";
 import * as receptionService from "@/services/reception.service";
 import * as activity from "@/services/activity.service";
+import * as notifService from "@/services/notification.service";
 
 type ActionResult = {
   success: boolean;
@@ -51,9 +52,27 @@ export async function createReceptionAction(data: {
       },
     });
 
+    // Notify incidents created
+    if (result.incidentsCreated > 0) {
+      await notifService.notifyIncidentCreated(
+        tenantId,
+        `${result.incidentsCreated} incidencia(s) detectada(s)`,
+        result.reception.receptionNumber,
+        result.reception.id,
+      );
+    }
+
+    // Notify partial order
+    if (result.newPoStatus === "PARTIAL") {
+      await notifService.notifyOrderPartial(
+        tenantId, "", result.reception.purchaseOrderId,
+      );
+    }
+
     revalidatePath("/reception");
     revalidatePath("/purchases");
     revalidatePath("/incidents");
+    revalidatePath("/notifications");
 
     return {
       success: true,

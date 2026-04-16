@@ -41,6 +41,10 @@ export async function getDelivery(id: string, tenantId: string) {
     include: {
       vehicle: { select: { id: true, name: true, plate: true } },
       assignedTo: { select: { name: true } },
+      customer: { select: { id: true, fullName: true, phone: true } },
+      lines: {
+        include: { product: { select: { ref: true, name: true } } },
+      },
     },
   });
 }
@@ -91,6 +95,7 @@ export async function createDelivery(
     const delivery = await tx.delivery.create({
       data: {
         deliveryNumber,
+        customerId: data.customerId || null,
         customerName: data.customerName,
         customerPhone: data.customerPhone || null,
         customerAddress: data.customerAddress,
@@ -103,6 +108,20 @@ export async function createDelivery(
         tenantId,
       },
     });
+
+    // Create delivery lines if provided
+    if (data.lines && data.lines.length > 0) {
+      await tx.deliveryLine.createMany({
+        data: data.lines.map((line) => ({
+          deliveryId: delivery.id,
+          productId: line.productId || null,
+          description: line.description,
+          quantity: line.quantity,
+          notes: line.notes || null,
+          tenantId,
+        })),
+      });
+    }
 
     await tx.vehicle.update({
       where: { id: data.vehicleId },

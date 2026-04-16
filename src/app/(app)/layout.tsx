@@ -15,7 +15,7 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const [tenant, openIncidents] = await Promise.all([
+  const [tenant, openIncidents, unreadNotifications] = await Promise.all([
     db.tenant.findUnique({
       where: { id: session.user.tenantId },
       select: { name: true },
@@ -24,6 +24,13 @@ export default async function AppLayout({
       where: {
         tenantId: session.user.tenantId,
         status: { in: ["REGISTERED", "NOTIFIED"] },
+      },
+    }),
+    db.notification.count({
+      where: {
+        tenantId: session.user.tenantId,
+        readAt: null,
+        OR: [{ userId: session.user.id }, { userId: null }],
       },
     }),
   ]);
@@ -37,6 +44,7 @@ export default async function AppLayout({
           userRole={session.user.role}
           tenantName={tenant?.name ?? ""}
           openIncidents={openIncidents}
+          unreadNotifications={unreadNotifications}
         />
         <main className="flex-1 overflow-y-auto bg-[#050a14] p-4 sm:p-6 lg:p-8">
           {children}
