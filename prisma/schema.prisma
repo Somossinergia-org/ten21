@@ -26,6 +26,8 @@ model Tenant {
   incidents      Incident[]
   vehicles       Vehicle[]
   deliveries     Delivery[]
+  activityLogs   ActivityLog[]
+  attachments    Attachment[]
 }
 
 // ============================================================
@@ -305,4 +307,54 @@ model Delivery {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([assignedToId])
+}
+
+// ============================================================
+// ACTIVITY LOG — Auditoría completa de acciones del usuario
+// ============================================================
+model ActivityLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String?
+  userName  String?
+  action    String
+  entity    String
+  entityId  String?
+  entityRef String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, userId])
+}
+
+// ============================================================
+// ATTACHMENTS — Documentos adjuntos a cualquier entidad
+// ============================================================
+enum AttachmentEntity {
+  PURCHASE_ORDER
+  RECEPTION
+  INCIDENT
+  DELIVERY
+}
+
+model Attachment {
+  id          String           @id @default(cuid())
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  entity      AttachmentEntity
+  entityId    String
+  fileName    String
+  fileType    String
+  fileSize    Int
+  dataUrl     String           @db.Text
+  uploadedById String
+  uploadedByName String
+  notes       String?
+  createdAt   DateTime         @default(now())
+
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, createdAt])
 }

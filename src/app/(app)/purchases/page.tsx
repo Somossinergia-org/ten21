@@ -29,12 +29,20 @@ export default async function PurchasesPage() {
             Pedidos a proveedores
           </p>
         </div>
-        <Link
-          href="/purchases/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Nuevo pedido
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/export/purchases"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Exportar Excel
+          </a>
+          <Link
+            href="/purchases/new"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Nuevo pedido
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">

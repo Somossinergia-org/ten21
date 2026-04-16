@@ -36,10 +36,20 @@ export default async function IncidentsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Incidencias</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Incidencias detectadas en recepciones de mercancia
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Incidencias</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Incidencias detectadas en recepciones de mercancia
+          </p>
+        </div>
+        <a
+          href="/api/export/incidents"
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Exportar Excel
+        </a>
+      </div>
 
       {/* Status filter tabs */}
       <div className="mt-4 flex flex-wrap gap-2">

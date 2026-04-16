@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole, getTenantId } from "@/lib/tenant";
+import { requireRole, getTenantId, getCurrentUser } from "@/lib/tenant";
 import {
   createDeliverySchema,
   startDeliverySchema,
   completeDeliverySchema,
 } from "@/lib/validations/delivery";
 import * as deliveryService from "@/services/delivery.service";
+import * as activity from "@/services/activity.service";
 
 type ActionResult = { success: boolean; error?: string };
 
@@ -23,6 +24,7 @@ export async function createDeliveryAction(data: {
 }): Promise<ActionResult & { deliveryId?: string }> {
   await requireRole(["JEFE", "REPARTO"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   const parsed = createDeliverySchema.safeParse(data);
   if (!parsed.success) {
@@ -31,6 +33,12 @@ export async function createDeliveryAction(data: {
 
   try {
     const delivery = await deliveryService.createDelivery(parsed.data, tenantId);
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "delivery.created", entity: "Delivery",
+      entityId: delivery.id, entityRef: delivery.deliveryNumber,
+      details: { customer: parsed.data.customerName },
+    });
     revalidatePath("/vehicles");
     return { success: true, deliveryId: delivery.id };
   } catch (e: unknown) {
@@ -44,6 +52,7 @@ export async function startDeliveryAction(data: {
 }): Promise<ActionResult> {
   await requireRole(["JEFE", "REPARTO"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   const parsed = startDeliverySchema.safeParse(data);
   if (!parsed.success) {
@@ -52,6 +61,12 @@ export async function startDeliveryAction(data: {
 
   try {
     await deliveryService.startDelivery(parsed.data.deliveryId, tenantId, parsed.data.startKm);
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "delivery.started", entity: "Delivery",
+      entityId: parsed.data.deliveryId,
+      details: parsed.data.startKm ? { startKm: parsed.data.startKm } : undefined,
+    });
     revalidatePath("/vehicles");
     return { success: true };
   } catch (e: unknown) {
@@ -66,6 +81,7 @@ export async function completeDeliveryAction(data: {
 }): Promise<ActionResult> {
   await requireRole(["JEFE", "REPARTO"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   const parsed = completeDeliverySchema.safeParse(data);
   if (!parsed.success) {
@@ -79,6 +95,13 @@ export async function completeDeliveryAction(data: {
       parsed.data.failed,
       parsed.data.endKm,
     );
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: parsed.data.failed ? "delivery.failed" : "delivery.completed",
+      entity: "Delivery",
+      entityId: parsed.data.deliveryId,
+      details: parsed.data.endKm ? { endKm: parsed.data.endKm } : undefined,
+    });
     revalidatePath("/vehicles");
     return { success: true };
   } catch (e: unknown) {

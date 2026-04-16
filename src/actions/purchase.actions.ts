@@ -6,6 +6,7 @@ import { createProductSchema } from "@/lib/validations/product";
 import { createSupplierSchema } from "@/lib/validations/supplier";
 import { createPurchaseOrderSchema } from "@/lib/validations/purchase";
 import * as purchaseService from "@/services/purchase.service";
+import * as activity from "@/services/activity.service";
 
 type ActionResult = {
   success: boolean;
@@ -19,6 +20,7 @@ type ActionResult = {
 export async function createProductAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["JEFE"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   const raw = {
     ref: formData.get("ref"),
@@ -32,7 +34,13 @@ export async function createProductAction(formData: FormData): Promise<ActionRes
   }
 
   try {
-    await purchaseService.createProduct(parsed.data, tenantId);
+    const product = await purchaseService.createProduct(parsed.data, tenantId);
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "product.created", entity: "Product",
+      entityId: product.id, entityRef: product.ref,
+      details: { name: product.name },
+    });
     revalidatePath("/purchases");
     return { success: true };
   } catch (e: unknown) {
@@ -50,6 +58,7 @@ export async function createProductAction(formData: FormData): Promise<ActionRes
 export async function createSupplierAction(formData: FormData): Promise<ActionResult> {
   await requireRole(["JEFE"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   const raw = {
     name: formData.get("name"),
@@ -64,7 +73,13 @@ export async function createSupplierAction(formData: FormData): Promise<ActionRe
   }
 
   try {
-    await purchaseService.createSupplier(parsed.data, tenantId);
+    const supplier = await purchaseService.createSupplier(parsed.data, tenantId);
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "supplier.created", entity: "Supplier",
+      entityId: supplier.id, entityRef: supplier.code,
+      details: { name: supplier.name },
+    });
     revalidatePath("/purchases");
     return { success: true };
   } catch (e: unknown) {
@@ -96,6 +111,12 @@ export async function createPurchaseOrderAction(data: {
 
   try {
     const order = await purchaseService.createPurchaseOrder(parsed.data, tenantId, user.id);
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "purchase.created", entity: "PurchaseOrder",
+      entityId: order.id, entityRef: order.orderNumber,
+      details: { lines: parsed.data.lines.length, type: parsed.data.type },
+    });
     revalidatePath("/purchases");
     return { success: true, orderId: order.id };
   } catch {
@@ -106,9 +127,15 @@ export async function createPurchaseOrderAction(data: {
 export async function sendPurchaseOrderAction(id: string): Promise<ActionResult> {
   await requireRole(["JEFE"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
 
   try {
-    await purchaseService.updatePurchaseOrderStatus(id, tenantId, "SENT");
+    const order = await purchaseService.updatePurchaseOrderStatus(id, tenantId, "SENT");
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: "purchase.sent", entity: "PurchaseOrder",
+      entityId: id, entityRef: order.orderNumber,
+    });
     revalidatePath(`/purchases/${id}`);
     revalidatePath("/purchases");
     return { success: true };

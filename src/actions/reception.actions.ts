@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole, getTenantId, getCurrentUser } from "@/lib/tenant";
 import { createReceptionSchema } from "@/lib/validations/reception";
 import * as receptionService from "@/services/reception.service";
+import * as activity from "@/services/activity.service";
 
 type ActionResult = {
   success: boolean;
@@ -37,6 +38,18 @@ export async function createReceptionAction(data: {
       tenantId,
       user.id,
     );
+
+    await activity.log({
+      tenantId, userId: user.id, userName: user.name,
+      action: result.incidentsCreated > 0 ? "reception.created" : "reception.completed",
+      entity: "Reception",
+      entityId: result.reception.id,
+      entityRef: result.reception.receptionNumber,
+      details: {
+        incidentsCreated: result.incidentsCreated,
+        newPoStatus: result.newPoStatus,
+      },
+    });
 
     revalidatePath("/reception");
     revalidatePath("/purchases");
