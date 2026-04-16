@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
+import { CursorGlow } from "@/components/effects/cursor-glow";
+import { TopProgress } from "@/components/effects/top-progress";
+import { FloatingAgent } from "@/components/agent/floating-agent";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ten21 - Gestion de Tienda",
   description: "Sistema de gestion para tiendas de muebles y electrodomesticos",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-  themeColor: "#ffffff",
+  themeColor: "#050a14",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Ten21",
   },
 };
@@ -24,7 +27,12 @@ export default function RootLayout({
     <html lang="es" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <TopProgress />
+            <CursorGlow />
+            {children}
+            <FloatingAgent />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
