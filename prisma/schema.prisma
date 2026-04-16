@@ -28,6 +28,8 @@ model Tenant {
   deliveries     Delivery[]
   activityLogs   ActivityLog[]
   attachments    Attachment[]
+  customers      Customer[]
+  notifications  Notification[]
 }
 
 // ============================================================
@@ -69,6 +71,9 @@ model Product {
   ref         String
   name        String
   description String?
+  salePrice   Decimal?          // Precio de venta al público
+  category    String?           // Familia/categoría (texto libre)
+  brand       String?           // Marca del producto
   active      Boolean  @default(true)
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
@@ -76,6 +81,7 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   purchaseLines PurchaseOrderLine[]
+  deliveryLines DeliveryLine[]
 
   @@unique([tenantId, ref])
   @@index([tenantId])
@@ -85,18 +91,23 @@ model Product {
 // PROVEEDORES
 // ============================================================
 model Supplier {
-  id        String   @id @default(cuid())
-  name      String
-  code      String
-  phone     String?
-  email     String?
-  active    Boolean  @default(true)
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  code            String
+  phone           String?
+  email           String?
+  taxId           String?           // CIF/NIF del proveedor
+  commercialTerms String?           // Condiciones comerciales
+  paymentTerms    String?           // Condiciones de pago
+  notes           String?
+  active          Boolean  @default(true)
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  orders PurchaseOrder[]
+  orders   PurchaseOrder[]
+  invoices SupplierInvoice[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -135,6 +146,7 @@ model PurchaseOrder {
 
   lines      PurchaseOrderLine[]
   receptions Reception[]
+  invoices   SupplierInvoice[]
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
@@ -288,7 +300,9 @@ model Delivery {
   vehicle         Vehicle?       @relation(fields: [vehicleId], references: [id])
   assignedToId    String?
   assignedTo      User?          @relation(fields: [assignedToId], references: [id])
-  customerName    String
+  customerId      String?
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  customerName    String         // Mantenido para compatibilidad con datos existentes
   customerPhone   String?
   customerAddress String
   description     String
@@ -303,10 +317,13 @@ model Delivery {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
+  lines DeliveryLine[]
+
   @@unique([tenantId, deliveryNumber])
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([assignedToId])
+  @@index([customerId])
 }
 
 // ============================================================
@@ -369,30 +386,120 @@ enum InvoiceStatus {
   PAID       // Pagada
 }
 
+enum ReconciliationStatus {
+  NOT_CHECKED
+  MATCHED
+  MISMATCHED
+}
+
 model SupplierInvoice {
-  id              String        @id @default(cuid())
-  invoiceNumber   String?
-  supplierId      String?
-  supplierName    String?
-  supplierNif     String?
-  purchaseOrderId String?
-  concept         String?
-  baseAmount      Decimal?
-  taxAmount       Decimal?
-  totalAmount     Decimal?
-  taxRate         Decimal?
-  invoiceDate     DateTime?
-  dueDate         DateTime?
-  status          InvoiceStatus @default(PENDING)
-  pdfDataUrl      String?       @db.Text
-  extractedData   Json?
-  notes           String?
-  tenantId        String
-  createdById     String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                   String                @id @default(cuid())
+  invoiceNumber        String?
+  supplierId           String?
+  supplier             Supplier?             @relation(fields: [supplierId], references: [id])
+  supplierName         String?
+  supplierNif          String?
+  purchaseOrderId      String?
+  purchaseOrder        PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
+  concept              String?
+  baseAmount           Decimal?
+  taxAmount            Decimal?
+  totalAmount          Decimal?
+  taxRate              Decimal?
+  invoiceDate          DateTime?
+  dueDate              DateTime?
+  status               InvoiceStatus         @default(PENDING)
+  reconciliationStatus ReconciliationStatus  @default(NOT_CHECKED)
+  mismatchReason       String?
+  pdfDataUrl           String?               @db.Text
+  extractedData        Json?
+  notes                String?
+  tenantId             String
+  createdById          String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, dueDate])
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+model Customer {
+  id           String   @id @default(cuid())
+  fullName     String
+  phone        String?
+  email        String?
+  addressLine1 String
+  addressLine2 String?
+  city         String?
+  postalCode   String?
+  province     String?
+  notes        String?
+  active       Boolean  @default(true)
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  @@index([tenantId])
+  @@index([tenantId, fullName])
+}
+
+// ============================================================
+// LINEAS DE ENTREGA
+// ============================================================
+model DeliveryLine {
+  id          String   @id @default(cuid())
+  deliveryId  String
+  delivery    Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  description String
+  quantity    Int      @default(1)
+  notes       String?
+  tenantId    String
+  createdAt   DateTime @default(now())
+
+  @@index([deliveryId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// NOTIFICACIONES INTERNAS
+// ============================================================
+enum NotificationType {
+  INCIDENT_CREATED
+  DELIVERY_FAILED
+  ORDER_PARTIAL
+  INVOICE_MISMATCH
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Notification {
+  id         String               @id @default(cuid())
+  tenantId   String
+  tenant     Tenant               @relation(fields: [tenantId], references: [id])
+  type       NotificationType
+  title      String
+  message    String
+  severity   NotificationSeverity @default(MEDIUM)
+  entityType String?
+  entityId   String?
+  userId     String?              // Destinatario (null = todos del tenant)
+  readAt     DateTime?
+  createdAt  DateTime             @default(now())
+
+  @@index([tenantId, userId, readAt])
+  @@index([tenantId, createdAt])
 }

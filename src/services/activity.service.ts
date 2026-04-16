@@ -14,8 +14,19 @@ export type ActivityAction =
   | "delivery.completed"
   | "delivery.failed"
   | "product.created"
+  | "product.updated"
   | "supplier.created"
-  | "vehicle.synced";
+  | "supplier.updated"
+  | "vehicle.created"
+  | "vehicle.updated"
+  | "vehicle.synced"
+  | "user.created"
+  | "user.updated"
+  | "customer.created"
+  | "customer.updated"
+  | "invoice.created"
+  | "invoice.reconciled"
+  | "notification.created";
 
 export type ActivityEntity =
   | "PurchaseOrder"
@@ -24,7 +35,11 @@ export type ActivityEntity =
   | "Delivery"
   | "Product"
   | "Supplier"
-  | "Vehicle";
+  | "Vehicle"
+  | "User"
+  | "Customer"
+  | "SupplierInvoice"
+  | "Notification";
 
 type LogInput = {
   tenantId: string;

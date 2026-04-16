@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
   AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain, Wallet,
+  UserCircle, Bell,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -14,7 +15,8 @@ type NavGroup = { title?: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   { items: [{ label: "Dashboard", href: "/dashboard", roles: ["JEFE"], icon: <LayoutDashboard size={16} /> }] },
-  { title: "Compras", items: [
+  { title: "Comercial", items: [
+    { label: "Clientes", href: "/customers", roles: ["JEFE"], icon: <UserCircle size={16} /> },
     { label: "Pedidos", href: "/purchases", roles: ["JEFE"], icon: <ShoppingCart size={16} /> },
     { label: "Productos", href: "/purchases/products", roles: ["JEFE"], icon: <Package size={16} /> },
     { label: "Proveedores", href: "/purchases/suppliers", roles: ["JEFE"], icon: <ClipboardList size={16} /> },
@@ -29,6 +31,7 @@ const navGroups: NavGroup[] = [
     { label: "Agenda", href: "/vehicles/deliveries/calendar", roles: ["JEFE", "REPARTO"], icon: <Calendar size={16} /> },
   ]},
   { title: "Sistema", items: [
+    { label: "Notificaciones", href: "/notifications", roles: ["JEFE", "ALMACEN", "REPARTO"], icon: <Bell size={16} /> },
     { label: "Finanzas", href: "/settings/finance", roles: ["JEFE"], icon: <Wallet size={16} /> },
     { label: "Inteligencia IA", href: "/settings/ai", roles: ["JEFE"], icon: <Brain size={16} /> },
     { label: "Usuarios", href: "/settings/users", roles: ["JEFE"], icon: <Users size={16} /> },

@@ -29,7 +29,7 @@ export async function createUserAction(data: {
     const user = await userService.createUser(tenantId, data);
     await activity.log({
       tenantId, userId: me.id, userName: me.name,
-      action: "supplier.created", entity: "Supplier",
+      action: "user.created", entity: "User",
       entityId: user.id, entityRef: user.email,
       details: { name: user.name, role: user.role },
     });
