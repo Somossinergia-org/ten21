@@ -76,8 +76,8 @@ export function FloatingAgent() {
                 <Bot size={16} className="text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-200">Agente Ten21</p>
-                <p className="text-[10px] text-cyan-500/60">IA especializada en electrodomésticos</p>
+                <p className="text-sm font-bold text-slate-200">Agente TodoMueble</p>
+                <p className="text-[10px] text-cyan-500/60">TodoMueble Guardamar — IA</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-slate-300 transition-colors">

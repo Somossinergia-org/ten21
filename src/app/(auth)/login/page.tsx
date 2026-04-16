@@ -21,13 +21,13 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mx-auto mb-4 animate-glow">
-            <span className="text-white font-black text-lg">T</span>
+            <span className="text-white font-black text-lg">TM</span>
           </div>
           <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-            Ten21
+            TodoMueble
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Gestion de tienda
+            Muebles y electrodomesticos — Guardamar
           </p>
         </div>
 

@@ -88,9 +88,9 @@ export function Sidebar({ role }: { role: Role }) {
         <div className="flex h-14 items-center px-5 border-b border-[#1a2d4a]">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center animate-glow">
-              <span className="text-white font-black text-[11px]">T</span>
+              <span className="text-white font-black text-[11px]">TM</span>
             </div>
-            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Ten21</span>
+            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">TodoMueble</span>
           </Link>
         </div>
         {nav}
@@ -101,9 +101,9 @@ export function Sidebar({ role }: { role: Role }) {
         <div className="flex h-14 items-center px-5 border-b border-[#1a2d4a]">
           <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-              <span className="text-white font-black text-[11px]">T</span>
+              <span className="text-white font-black text-[11px]">TM</span>
             </div>
-            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Ten21</span>
+            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">TodoMueble</span>
           </Link>
         </div>
         {nav}

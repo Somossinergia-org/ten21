@@ -19,24 +19,24 @@ export function QuickAccess({ tenantId }: { tenantId: string }) {
 
   const users: QuickUser[] = [
     {
-      name: "Maria Lopez",
-      email: "jefe@electro-lopez.com",
+      name: "Carlos Gutierrez",
+      email: "jefe@todomueble.com",
       role: "JEFE",
       roleLabel: "Jefe / Admin",
       color: "from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
       icon: "👑",
     },
     {
-      name: "Juan Fernandez",
-      email: "almacen@electro-lopez.com",
+      name: "Raquel Martinez",
+      email: "almacen@todomueble.com",
       role: "ALMACEN",
       roleLabel: "Almacen",
       color: "from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700",
       icon: "📦",
     },
     {
-      name: "Luis Sanchez",
-      email: "reparto@electro-lopez.com",
+      name: "Demetrio Lopez",
+      email: "reparto@todomueble.com",
       role: "REPARTO",
       roleLabel: "Reparto",
       color: "from-green-500 to-green-600 hover:from-green-600 hover:to-green-700",

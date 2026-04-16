@@ -7,14 +7,14 @@ import { FloatingAgent } from "@/components/agent/floating-agent";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ten21 - Gestion de Tienda",
-  description: "Sistema de gestion para tiendas de muebles y electrodomesticos",
+  title: "TodoMueble - Control de Tienda",
+  description: "Sistema de gestion para TodoMueble Guardamar",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   themeColor: "#050a14",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Ten21",
+    title: "TodoMueble",
   },
 };
 

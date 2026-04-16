@@ -8,263 +8,171 @@ async function main() {
   console.log("Seeding database...");
 
   // ============================================================
-  // TENANT: Electrodomesticos Lopez
+  // TENANT: TodoMueble Guardamar
   // ============================================================
   const tenant = await prisma.tenant.create({
-    data: { name: "Electrodomesticos Lopez", slug: "electro-lopez" },
+    data: { name: "TodoMueble Guardamar", slug: "todomueble" },
   });
   const t = tenant.id;
 
   // --- USERS ---
   const jefe = await prisma.user.create({
-    data: { email: "jefe@electro-lopez.com", name: "Maria Lopez", password: await hash("password123"), role: Role.JEFE, tenantId: t },
+    data: { email: "jefe@todomueble.com", name: "Carlos Gutierrez", password: await hash("password123"), role: Role.JEFE, tenantId: t },
   });
   const almacen = await prisma.user.create({
-    data: { email: "almacen@electro-lopez.com", name: "Juan Fernandez", password: await hash("password123"), role: Role.ALMACEN, tenantId: t },
+    data: { email: "almacen@todomueble.com", name: "Raquel Martinez", password: await hash("password123"), role: Role.ALMACEN, tenantId: t },
   });
   const reparto1 = await prisma.user.create({
-    data: { email: "reparto@electro-lopez.com", name: "Luis Sanchez", password: await hash("password123"), role: Role.REPARTO, tenantId: t },
+    data: { email: "reparto@todomueble.com", name: "Demetrio Lopez", password: await hash("password123"), role: Role.REPARTO, tenantId: t },
   });
   const reparto2 = await prisma.user.create({
-    data: { email: "reparto2@electro-lopez.com", name: "Miguel Torres", password: await hash("password123"), role: Role.REPARTO, tenantId: t },
+    data: { email: "reparto2@todomueble.com", name: "Miguel Torres", password: await hash("password123"), role: Role.REPARTO, tenantId: t },
   });
 
-  // --- SUPPLIERS ---
-  const provDistri = await prisma.supplier.create({
-    data: { name: "Distribuciones Electrohogar S.L.", code: "PROV-001", phone: "968 112 233", email: "pedidos@electrohogar.es", tenantId: t },
+  // --- SUPPLIERS (proveedores reales del sector) ---
+  const provColchones = await prisma.supplier.create({
+    data: { name: "Sistemas del Descanso S.L.", code: "PROV-001", phone: "961 862 504", email: "pedidos@descanso.es", tenantId: t },
   });
-  const provSamsung = await prisma.supplier.create({
-    data: { name: "Samsung Logistica España", code: "PROV-002", phone: "900 100 120", email: "logistica@samsung.es", tenantId: t },
+  const provMuebles = await prisma.supplier.create({
+    data: { name: "Muebles del Sur S.L.", code: "PROV-002", phone: "950 445 678", email: "ventas@mueblessur.es", tenantId: t },
   });
-  const provBosch = await prisma.supplier.create({
-    data: { name: "Grupo Bosch Electrodomesticos", code: "PROV-003", phone: "900 200 201", email: "pedidos@bsh-group.es", tenantId: t },
+  const provElectro = await prisma.supplier.create({
+    data: { name: "Tien21 Distribucion", code: "PROV-003", phone: "902 100 200", email: "pedidos@tien21dist.es", tenantId: t },
   });
 
-  // --- PRODUCTS (electrodomesticos reales) ---
-  const lavSamsung8 = await prisma.product.create({
-    data: { ref: "LAV-001", name: "Lavadora Samsung 8kg 1400rpm", description: "Lavadora carga frontal EcoBubble", tenantId: t },
-  });
-  const lavSamsung10 = await prisma.product.create({
-    data: { ref: "LAV-002", name: "Lavadora Samsung 10kg AddWash", description: "Lavadora carga frontal con puerta AddWash", tenantId: t },
-  });
-  const friBosch = await prisma.product.create({
-    data: { ref: "FRI-001", name: "Frigorifico Bosch NoFrost 186cm", description: "Frigorifico combi NoFrost clase A", tenantId: t },
-  });
-  const friSamsung = await prisma.product.create({
-    data: { ref: "FRI-002", name: "Frigorifico Samsung Twin Cooling", description: "Frigorifico combi Twin Cooling 185cm", tenantId: t },
-  });
-  const lavvSiemens = await prisma.product.create({
-    data: { ref: "LVV-001", name: "Lavavajillas Siemens 60cm", description: "Lavavajillas integrable 14 servicios", tenantId: t },
-  });
-  const lavvBosch = await prisma.product.create({
-    data: { ref: "LVV-002", name: "Lavavajillas Bosch 60cm", description: "Lavavajillas libre instalacion 13 servicios", tenantId: t },
-  });
-  const hornoBosch = await prisma.product.create({
-    data: { ref: "HOR-001", name: "Horno Bosch pirolítico 60cm", description: "Horno multifuncion pirolitico clase A+", tenantId: t },
-  });
-  const placaBosch = await prisma.product.create({
-    data: { ref: "PLA-001", name: "Placa induccion Bosch 3 zonas", description: "Placa de induccion 60cm con 3 zonas", tenantId: t },
-  });
-  const secSamsung = await prisma.product.create({
-    data: { ref: "SEC-001", name: "Secadora Samsung 9kg bomba calor", description: "Secadora con bomba de calor clase A++", tenantId: t },
-  });
-  const microBosch = await prisma.product.create({
-    data: { ref: "MIC-001", name: "Microondas Bosch 25L", description: "Microondas con grill 25 litros", tenantId: t },
-  });
+  // --- PRODUCTS (muebles + electrodomesticos) ---
+  const topperVisco = await prisma.product.create({ data: { ref: "COL-001", name: "Topper Visco 6cm 150x190", description: "Sobrecolchon viscoelastico 6cm", tenantId: t } });
+  const colchonVisco = await prisma.product.create({ data: { ref: "COL-002", name: "Colchon Visco Premium 150x190", description: "Colchon viscoelastico firmeza media-alta", tenantId: t } });
+  const sillonOficina = await prisma.product.create({ data: { ref: "SIL-001", name: "Sillon de Oficina Ergonomico", description: "Sillon giratorio con reposabrazos", tenantId: t } });
+  const sofaTres = await prisma.product.create({ data: { ref: "SOF-001", name: "Sofa 3 plazas Modelo Confort", description: "Sofa 3 plazas tapizado gris", tenantId: t } });
+  const mesaComedor = await prisma.product.create({ data: { ref: "MES-001", name: "Mesa Comedor Extensible Roble", description: "Mesa extensible 140-200cm roble natural", tenantId: t } });
+  const sillasPack = await prisma.product.create({ data: { ref: "SIL-002", name: "Pack 4 Sillas Comedor", description: "Pack 4 sillas tapizadas beige", tenantId: t } });
+  const lavadora = await prisma.product.create({ data: { ref: "LAV-001", name: "Lavadora Samsung 8kg 1400rpm", description: "Lavadora carga frontal EcoBubble", tenantId: t } });
+  const frigorifico = await prisma.product.create({ data: { ref: "FRI-001", name: "Frigorifico Bosch NoFrost 186cm", description: "Frigorifico combi NoFrost clase A", tenantId: t } });
+  const lavavajillas = await prisma.product.create({ data: { ref: "LVV-001", name: "Lavavajillas Siemens 60cm", description: "Lavavajillas integrable 14 servicios", tenantId: t } });
+  const jardinera = await prisma.product.create({ data: { ref: "JAR-001", name: "Jardinera Mimbre Exterior", description: "Jardinera de mimbre para terraza", tenantId: t } });
 
   // --- VEHICLES ---
-  const furgGrande = await prisma.vehicle.create({
-    data: { plate: "4521-KLM", name: "Furgoneta MAN grande", status: VehicleStatus.IN_USE, tenantId: t },
-  });
-  const furgPeq = await prisma.vehicle.create({
-    data: { plate: "7834-NPQ", name: "Furgoneta Iveco", status: VehicleStatus.AVAILABLE, tenantId: t },
-  });
-  await prisma.vehicle.create({
-    data: { plate: "1122-RST", name: "Furgoneta Mercedes", status: VehicleStatus.AVAILABLE, tenantId: t },
-  });
+  const furg1 = await prisma.vehicle.create({ data: { plate: "4521-KLM", name: "Furgoneta MAN grande", status: VehicleStatus.IN_USE, tenantId: t } });
+  const furg2 = await prisma.vehicle.create({ data: { plate: "7834-NPQ", name: "Furgoneta Iveco", status: VehicleStatus.AVAILABLE, tenantId: t } });
+  await prisma.vehicle.create({ data: { plate: "1122-RST", name: "Furgoneta Mercedes Sprinter", status: VehicleStatus.AVAILABLE, tenantId: t } });
 
   const now = new Date();
 
   // ============================================================
-  // PEDIDO 1: Samsung — RECEIVED (completado)
+  // PEDIDOS
   // ============================================================
+
+  // PED-001: Colchones — RECEIVED
   const ped1 = await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-001", type: PurchaseOrderType.SALE, supplierId: provSamsung.id,
-      status: "RECEIVED", notes: "Pedido cliente Martinez - lavadora + frigorifico",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: lavSamsung8.id, quantityOrdered: 2, quantityReceived: 2, expectedUnitCost: 320.00 },
-          { productId: friSamsung.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 540.00 },
-        ],
-      },
+      orderNumber: "PED-001", type: PurchaseOrderType.SALE, supplierId: provColchones.id,
+      status: "RECEIVED", notes: "Pedido colchones para cliente", tenantId: t, createdById: jefe.id,
+      lines: { create: [
+        { productId: topperVisco.id, quantityOrdered: 2, quantityReceived: 2, expectedUnitCost: 85.00 },
+        { productId: colchonVisco.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 320.00 },
+      ] },
     },
   });
-
-  // Reception OK for PED-001
   await prisma.reception.create({
     data: {
-      receptionNumber: "REC-001", purchaseOrderId: ped1.id, deliveryNoteRef: "ALB-SAM-40221",
-      status: "COMPLETED", receivedById: almacen.id, receivedAt: new Date(now.getTime() - 3 * 86400000),
-      tenantId: t,
-      lines: {
-        create: [
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped1.id, productId: lavSamsung8.id } }))!.id, quantityExpected: 2, quantityReceived: 2, quantityDamaged: 0 },
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped1.id, productId: friSamsung.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 0 },
-        ],
-      },
+      receptionNumber: "REC-001", purchaseOrderId: ped1.id, deliveryNoteRef: "ALB-4883",
+      status: "COMPLETED", receivedById: almacen.id, receivedAt: new Date(now.getTime() - 3 * 86400000), tenantId: t,
+      lines: { create: [
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped1.id, productId: topperVisco.id } }))!.id, quantityExpected: 2, quantityReceived: 2, quantityDamaged: 0 },
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped1.id, productId: colchonVisco.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 0 },
+      ] },
     },
   });
 
-  // ============================================================
-  // PEDIDO 2: Bosch — PARTIAL (con incidencias)
-  // ============================================================
+  // PED-002: Muebles — PARTIAL (con incidencias)
   const ped2 = await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-002", type: PurchaseOrderType.SALE, supplierId: provBosch.id,
-      status: "PARTIAL", notes: "Pedido semanal Bosch",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: friBosch.id, quantityOrdered: 3, quantityReceived: 2, expectedUnitCost: 580.00 },
-          { productId: hornoBosch.id, quantityOrdered: 2, quantityReceived: 2, expectedUnitCost: 395.00 },
-          { productId: lavvBosch.id, quantityOrdered: 2, quantityReceived: 0, expectedUnitCost: 420.00 },
-          { productId: placaBosch.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 310.00 },
-        ],
-      },
+      orderNumber: "PED-002", type: PurchaseOrderType.SALE, supplierId: provMuebles.id,
+      status: "PARTIAL", notes: "Pedido salon completo", tenantId: t, createdById: jefe.id,
+      lines: { create: [
+        { productId: sofaTres.id, quantityOrdered: 2, quantityReceived: 1, expectedUnitCost: 450.00 },
+        { productId: mesaComedor.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 380.00 },
+        { productId: sillasPack.id, quantityOrdered: 2, quantityReceived: 0, expectedUnitCost: 220.00 },
+        { productId: jardinera.id, quantityOrdered: 3, quantityReceived: 0, expectedUnitCost: 45.00 },
+      ] },
     },
   });
-
   const rec2 = await prisma.reception.create({
     data: {
-      receptionNumber: "REC-002", purchaseOrderId: ped2.id, deliveryNoteRef: "ALB-BSH-88102",
-      status: "WITH_INCIDENTS", receivedById: almacen.id, receivedAt: new Date(now.getTime() - 86400000),
-      tenantId: t,
-      lines: {
-        create: [
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: friBosch.id } }))!.id, quantityExpected: 3, quantityReceived: 2, quantityDamaged: 1 },
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: hornoBosch.id } }))!.id, quantityExpected: 2, quantityReceived: 2, quantityDamaged: 0 },
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: lavvBosch.id } }))!.id, quantityExpected: 2, quantityReceived: 0, quantityDamaged: 0 },
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: placaBosch.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 0 },
-        ],
-      },
+      receptionNumber: "REC-002", purchaseOrderId: ped2.id, deliveryNoteRef: "ALB-21685",
+      status: "WITH_INCIDENTS", receivedById: almacen.id, receivedAt: new Date(now.getTime() - 86400000), tenantId: t,
+      lines: { create: [
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: sofaTres.id } }))!.id, quantityExpected: 2, quantityReceived: 1, quantityDamaged: 0 },
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: mesaComedor.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 0 },
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: sillasPack.id } }))!.id, quantityExpected: 2, quantityReceived: 0, quantityDamaged: 0 },
+        { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped2.id, productId: jardinera.id } }))!.id, quantityExpected: 3, quantityReceived: 0, quantityDamaged: 0, notes: "Falta servir jardinera — anotado a mano" },
+      ] },
     },
   });
+  await prisma.incident.create({ data: { receptionId: rec2.id, type: "QUANTITY_MISMATCH", status: "REGISTERED", description: "SOF-001 (Sofa 3 plazas): se esperaban 2, se recibio 1 (falta 1)", reportedById: almacen.id, tenantId: t } });
+  await prisma.incident.create({ data: { receptionId: rec2.id, type: "QUANTITY_MISMATCH", status: "NOTIFIED", description: "SIL-002 (Pack 4 Sillas): se esperaban 2, se recibieron 0 (faltan 2 packs)", reportedById: almacen.id, tenantId: t } });
+  await prisma.incident.create({ data: { receptionId: rec2.id, type: "QUANTITY_MISMATCH", status: "REGISTERED", description: "JAR-001 (Jardinera Mimbre): se esperaban 3, se recibieron 0 (faltan 3)", reportedById: almacen.id, tenantId: t } });
 
-  // Incidents for PED-002
-  await prisma.incident.create({
-    data: {
-      receptionId: rec2.id, type: "QUANTITY_MISMATCH", status: "REGISTERED",
-      description: "FRI-001 (Frigorifico Bosch NoFrost 186cm): se esperaban 3, se recibieron 2 (falta 1)",
-      reportedById: almacen.id, tenantId: t,
-    },
-  });
-  await prisma.incident.create({
-    data: {
-      receptionId: rec2.id, type: "DAMAGED", status: "NOTIFIED",
-      description: "FRI-001 (Frigorifico Bosch NoFrost 186cm): 1 unidad con golpe en lateral derecho",
-      reportedById: almacen.id, tenantId: t,
-    },
-  });
-  await prisma.incident.create({
-    data: {
-      receptionId: rec2.id, type: "QUANTITY_MISMATCH", status: "REGISTERED",
-      description: "LVV-002 (Lavavajillas Bosch 60cm): se esperaban 2, se recibieron 0 (faltan 2)",
-      reportedById: almacen.id, tenantId: t,
-    },
-  });
-
-  // ============================================================
-  // PEDIDO 3: Distribuciones — SENT (pendiente recepcion)
-  // ============================================================
+  // PED-003: Tien21 electrodomesticos — SENT
   await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-003", type: PurchaseOrderType.SALE, supplierId: provDistri.id,
-      status: "SENT", notes: "Reposicion electrodomesticos pequeños",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: microBosch.id, quantityOrdered: 4, expectedUnitCost: 89.00 },
-          { productId: secSamsung.id, quantityOrdered: 2, expectedUnitCost: 485.00 },
-        ],
-      },
+      orderNumber: "PED-003", type: PurchaseOrderType.SALE, supplierId: provElectro.id,
+      status: "SENT", notes: "Pedido electrodomesticos semana", tenantId: t, createdById: jefe.id,
+      lines: { create: [
+        { productId: lavadora.id, quantityOrdered: 3, expectedUnitCost: 320.00 },
+        { productId: frigorifico.id, quantityOrdered: 2, expectedUnitCost: 580.00 },
+        { productId: lavavajillas.id, quantityOrdered: 1, expectedUnitCost: 420.00 },
+      ] },
     },
   });
 
-  // ============================================================
-  // PEDIDO 4: Samsung — SENT (pendiente recepcion)
-  // ============================================================
+  // PED-004: Exposicion — SENT
   await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-004", type: PurchaseOrderType.EXHIBITION, supplierId: provSamsung.id,
-      status: "SENT", notes: "Exposicion nueva gama Samsung",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: lavSamsung10.id, quantityOrdered: 1, expectedUnitCost: 420.00 },
-          { productId: friSamsung.id, quantityOrdered: 1, expectedUnitCost: 540.00 },
-          { productId: secSamsung.id, quantityOrdered: 1, expectedUnitCost: 485.00 },
-        ],
-      },
+      orderNumber: "PED-004", type: PurchaseOrderType.EXHIBITION, supplierId: provMuebles.id,
+      status: "SENT", notes: "Exposicion nueva temporada verano", tenantId: t, createdById: jefe.id,
+      lines: { create: [
+        { productId: sofaTres.id, quantityOrdered: 1, expectedUnitCost: 450.00 },
+        { productId: jardinera.id, quantityOrdered: 4, expectedUnitCost: 45.00 },
+      ] },
     },
   });
 
-  // ============================================================
-  // PEDIDO 5: Bosch — DRAFT
-  // ============================================================
+  // PED-005: DRAFT
   await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-005", type: PurchaseOrderType.SALE, supplierId: provBosch.id,
-      status: "DRAFT", notes: "Preparar para la semana que viene",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: lavvSiemens.id, quantityOrdered: 3, expectedUnitCost: 445.00 },
-          { productId: hornoBosch.id, quantityOrdered: 1, expectedUnitCost: 395.00 },
-        ],
-      },
+      orderNumber: "PED-005", type: PurchaseOrderType.SALE, supplierId: provColchones.id,
+      status: "DRAFT", notes: "Preparar para la proxima semana", tenantId: t, createdById: jefe.id,
+      lines: { create: [
+        { productId: colchonVisco.id, quantityOrdered: 3, expectedUnitCost: 320.00 },
+        { productId: topperVisco.id, quantityOrdered: 2, expectedUnitCost: 85.00 },
+      ] },
     },
   });
 
-  // ============================================================
-  // RECEPCION 3: de hoy, correcta
-  // ============================================================
-  // First create a quick received order for today's reception
+  // PED-006: Rapido — RECEIVED hoy
   const ped6 = await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-006", type: PurchaseOrderType.SALE, supplierId: provDistri.id,
-      status: "RECEIVED", notes: "Pedido rapido microondas",
-      tenantId: t, createdById: jefe.id,
-      lines: {
-        create: [
-          { productId: microBosch.id, quantityOrdered: 2, quantityReceived: 2, expectedUnitCost: 89.00 },
-        ],
-      },
+      orderNumber: "PED-006", type: PurchaseOrderType.SALE, supplierId: provColchones.id,
+      status: "RECEIVED", notes: "Urgente cliente espera", tenantId: t, createdById: jefe.id,
+      lines: { create: [{ productId: sillonOficina.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 215.00 }] },
     },
   });
-
   await prisma.reception.create({
     data: {
-      receptionNumber: "REC-003", purchaseOrderId: ped6.id, deliveryNoteRef: "ALB-EH-9930",
+      receptionNumber: "REC-003", purchaseOrderId: ped6.id, deliveryNoteRef: "ALB-EXP-412",
       status: "COMPLETED", receivedById: almacen.id, receivedAt: now, tenantId: t,
-      lines: {
-        create: [
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped6.id, productId: microBosch.id } }))!.id, quantityExpected: 2, quantityReceived: 2, quantityDamaged: 0 },
-        ],
-      },
+      lines: { create: [{ purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped6.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 0 }] },
     },
   });
 
-  // ============================================================
-  // INCIDENCIA CERRADA (historica)
-  // ============================================================
-  // Create a past reception for the closed incident
+  // Incidencia cerrada historica
   const ped7 = await prisma.purchaseOrder.create({
     data: {
-      orderNumber: "PED-007", type: PurchaseOrderType.SALE, supplierId: provSamsung.id,
+      orderNumber: "PED-007", type: PurchaseOrderType.SALE, supplierId: provElectro.id,
       status: "RECEIVED", tenantId: t, createdById: jefe.id,
-      lines: { create: [{ productId: lavSamsung8.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 320.00 }] },
+      lines: { create: [{ productId: lavadora.id, quantityOrdered: 1, quantityReceived: 1, expectedUnitCost: 320.00 }] },
     },
   });
   const rec4 = await prisma.reception.create({
@@ -272,18 +180,14 @@ async function main() {
       receptionNumber: "REC-004", purchaseOrderId: ped7.id,
       status: "WITH_INCIDENTS", receivedById: almacen.id,
       receivedAt: new Date(now.getTime() - 7 * 86400000), tenantId: t,
-      lines: {
-        create: [
-          { purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped7.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 1 },
-        ],
-      },
+      lines: { create: [{ purchaseOrderLineId: (await prisma.purchaseOrderLine.findFirst({ where: { purchaseOrderId: ped7.id } }))!.id, quantityExpected: 1, quantityReceived: 1, quantityDamaged: 1 }] },
     },
   });
   await prisma.incident.create({
     data: {
       receptionId: rec4.id, type: "DAMAGED", status: "CLOSED",
       description: "LAV-001 (Lavadora Samsung 8kg): puerta con arañazo visible",
-      resolution: "Proveedor envio unidad de reposicion el 03/04",
+      resolution: "Proveedor envio unidad de reposicion",
       reviewedAt: new Date(now.getTime() - 5 * 86400000),
       closedAt: new Date(now.getTime() - 4 * 86400000),
       closedById: jefe.id,
@@ -294,95 +198,24 @@ async function main() {
   // ============================================================
   // ENTREGAS
   // ============================================================
-  // Entrega 1: EN RUTA (hoy)
-  await prisma.delivery.create({
-    data: {
-      deliveryNumber: "ENT-001", vehicleId: furgGrande.id, assignedToId: reparto1.id,
-      customerName: "Antonio Martinez", customerPhone: "658 112 233",
-      customerAddress: "C/ Gran Via 45, 2ºB, Murcia",
-      description: "Lavadora Samsung 8kg + Frigorifico Samsung Twin Cooling",
-      status: "IN_TRANSIT", scheduledDate: now, startKm: 45230,
-      tenantId: t,
-    },
-  });
-
-  // Entrega 2: ASIGNADA para hoy
-  await prisma.delivery.create({
-    data: {
-      deliveryNumber: "ENT-002", vehicleId: furgPeq.id, assignedToId: reparto2.id,
-      customerName: "Carmen Ruiz", customerPhone: "677 445 566",
-      customerAddress: "Avda. Libertad 12, bajo, Cartagena",
-      description: "Horno Bosch pirolitico + Placa induccion Bosch",
-      status: "ASSIGNED", scheduledDate: now,
-      tenantId: t,
-    },
-  });
-
-  // Entrega 3: ENTREGADA ayer
-  await prisma.delivery.create({
-    data: {
-      deliveryNumber: "ENT-003", vehicleId: furgGrande.id, assignedToId: reparto1.id,
-      customerName: "Francisco Gomez", customerPhone: "612 998 877",
-      customerAddress: "C/ Almirante 8, 1ºA, Lorca",
-      description: "Frigorifico Bosch NoFrost 186cm",
-      status: "DELIVERED", scheduledDate: new Date(now.getTime() - 86400000),
-      deliveredAt: new Date(now.getTime() - 86400000), startKm: 44980, endKm: 45120,
-      tenantId: t,
-    },
-  });
-
-  // Entrega 4: FALLIDA (cliente no estaba)
-  await prisma.delivery.create({
-    data: {
-      deliveryNumber: "ENT-004", vehicleId: furgPeq.id, assignedToId: reparto2.id,
-      customerName: "Isabel Navarro",
-      customerAddress: "C/ Olivos 22, Molina de Segura",
-      description: "Lavavajillas Siemens 60cm",
-      status: "FAILED", scheduledDate: new Date(now.getTime() - 2 * 86400000),
-      deliveredAt: new Date(now.getTime() - 2 * 86400000), startKm: 44800, endKm: 44850,
-      notes: "Cliente no estaba en domicilio. Segundo intento pendiente.",
-      tenantId: t,
-    },
-  });
-
-  // Entrega 5: PENDIENTE proximos dias
-  await prisma.delivery.create({
-    data: {
-      deliveryNumber: "ENT-005",
-      customerName: "Pedro Sanchez", customerPhone: "644 223 344",
-      customerAddress: "Avda. Juan Carlos I, 15, Murcia",
-      description: "Secadora Samsung 9kg bomba calor",
-      status: "PENDING", scheduledDate: new Date(now.getTime() + 2 * 86400000),
-      tenantId: t,
-    },
-  });
+  await prisma.delivery.create({ data: { deliveryNumber: "ENT-001", vehicleId: furg1.id, assignedToId: reparto1.id, customerName: "Carmen Rodriguez", customerPhone: "658 112 233", customerAddress: "C/ Mayor 15, 2ºB, Guardamar del Segura", description: "Sofa 3 plazas + Mesa comedor extensible", status: "IN_TRANSIT", scheduledDate: now, startKm: 45230, tenantId: t } });
+  await prisma.delivery.create({ data: { deliveryNumber: "ENT-002", vehicleId: furg2.id, assignedToId: reparto2.id, customerName: "Antonio Perez", customerPhone: "677 445 566", customerAddress: "Avda. de la Libertad 22, Rojales", description: "Sillon de Oficina Ergonomico", status: "ASSIGNED", scheduledDate: now, tenantId: t } });
+  await prisma.delivery.create({ data: { deliveryNumber: "ENT-003", vehicleId: furg1.id, assignedToId: reparto1.id, customerName: "Maria Garcia", customerPhone: "612 998 877", customerAddress: "C/ San Pedro 8, 1ºA, Torrevieja", description: "Colchon Visco Premium 150x190 + Topper", status: "DELIVERED", scheduledDate: new Date(now.getTime() - 86400000), deliveredAt: new Date(now.getTime() - 86400000), startKm: 44980, endKm: 45120, tenantId: t } });
+  await prisma.delivery.create({ data: { deliveryNumber: "ENT-004", vehicleId: furg2.id, assignedToId: reparto2.id, customerName: "Isabel Navarro", customerAddress: "C/ Olivos 22, Benijofar", description: "Lavadora Samsung 8kg", status: "FAILED", scheduledDate: new Date(now.getTime() - 2 * 86400000), deliveredAt: new Date(now.getTime() - 2 * 86400000), startKm: 44800, endKm: 44850, notes: "Cliente no estaba en domicilio", tenantId: t } });
+  await prisma.delivery.create({ data: { deliveryNumber: "ENT-005", customerName: "Pedro Martinez", customerPhone: "644 223 344", customerAddress: "Urb. Marina, Guardamar del Segura", description: "Pack 4 Sillas Comedor + Jardineras mimbre", status: "PENDING", scheduledDate: new Date(now.getTime() + 2 * 86400000), tenantId: t } });
 
   console.log("");
   console.log("=== SEED COMPLETADO ===");
   console.log("");
-  console.log("Tenant: Electrodomesticos Lopez (electro-lopez)");
+  console.log("Tenant: TodoMueble Guardamar (todomueble)");
   console.log("");
   console.log("Credenciales:");
-  console.log("  Jefe:      jefe@electro-lopez.com / password123");
-  console.log("  Almacen:   almacen@electro-lopez.com / password123");
-  console.log("  Reparto 1: reparto@electro-lopez.com / password123");
-  console.log("  Reparto 2: reparto2@electro-lopez.com / password123");
-  console.log("");
-  console.log("Dashboard mostrara:");
-  console.log("  - 3 incidencias abiertas (rojo)");
-  console.log("  - 3 pedidos pendientes (SENT+PARTIAL) (naranja)");
-  console.log("  - 1 recepcion OK hoy (verde)");
-  console.log("  - 1 vehiculo en uso (azul)");
-  console.log("  - 2 entregas en curso (azul)");
-  console.log("  - 1 entrega fallida (alerta roja)");
-  console.log("  - 1 pedido incompleto (alerta naranja)");
+  console.log("  Jefe:      jefe@todomueble.com / password123");
+  console.log("  Almacen:   almacen@todomueble.com / password123");
+  console.log("  Reparto 1: reparto@todomueble.com / password123");
+  console.log("  Reparto 2: reparto2@todomueble.com / password123");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

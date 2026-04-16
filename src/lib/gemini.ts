@@ -2,9 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-const SYSTEM_PROMPT = `Eres el asistente inteligente de Ten21, un sistema de gestión para tiendas de muebles y electrodomésticos.
+const SYSTEM_PROMPT = `Eres el asistente inteligente de TodoMueble Guardamar, un sistema de gestión para tiendas de muebles y electrodomésticos.
 
-Tu nombre es "Agente Ten21". Hablas siempre en español de España.
+Tu nombre es "Agente TodoMueble". Hablas siempre en español de España.
 
 CONTEXTO DEL NEGOCIO:
 - Gestionas tiendas que venden electrodomésticos (lavadoras, frigoríficos, hornos, lavavajillas, etc.) y muebles
