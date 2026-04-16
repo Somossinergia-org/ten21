@@ -156,9 +156,24 @@ CustomerInvoice (DRAFT->ISSUED->PARTIALLY_PAID->PAID)
 - Stock bajo, entregas activas, tickets posventa
 - Alertas de margen accionables
 
+### PWA Movil (V5)
+- Instalable en movil y escritorio (manifest.webmanifest)
+- Vista reparto: entregas del dia, estados, pruebas de entrega
+- Vista almacen: recepciones pendientes, incidencias
+- DeliveryProof: foto, firma, GPS, nota con idempotencia offline
+
+### Automatizaciones Omnicanal (V5)
+- Motor de reglas: evento -> plantilla -> canal -> cola
+- Eventos: DELIVERY_ASSIGNED/IN_TRANSIT/FAILED/DELIVERED, POST_SALE_URGENT, INVOICE_OVERDUE
+- Canales: Email (Resend), WhatsApp (Business API), Push, Interno
+- Cola OutboundMessage con reintentos (max 3), backoff, deduplicacion
+- Consentimiento por canal: allowEmail, allowWhatsApp por cliente
+- Panel JEFE: reglas, plantillas, cola, mensajes fallidos, reenvio manual
+
 ### Clientes
 - Entidad centralizada con historial de entregas, ventas y facturas
 - Vista 360: datos, direccion, entregas, ventas, tickets posventa
+- Consentimiento de comunicacion por canal
 
 ### Notificaciones
 - Alertas internas para: incidencias, entregas fallidas, pedidos parciales, facturas discrepantes
@@ -191,24 +206,25 @@ src/
   components/           # UI (layout, agent, attachments, timeline, dashboard)
   lib/                  # Auth, DB, tenant helpers, validaciones Zod
 prisma/
-  schema.prisma         # 27 modelos, 23 enums
+  schema.prisma         # 33 modelos, 30+ enums
   seed.ts               # Datos demo TodoMueble Guardamar
   backfill-customers.ts # Migracion Delivery->Customer
-  migrations/           # 9 migraciones
+  migrations/           # 10 migraciones
 tests/
-  unit/                 # 113 tests (validaciones, estados, financieros)
+  unit/                 # 125 tests (validaciones, estados, financieros, proofs, automations)
 docs/
-  plan_arquitectura.md, plan_arquitectura_v3.md, plan_arquitectura_v4.md
-  reglas-dominio.md, reglas-dominio-v3.md, reglas-dominio-v4.md
-  roadmap-v2.md, roadmap-v3.md, roadmap-v4.md
+  plan_arquitectura.md, v3.md, v4.md, v5.md
+  reglas-dominio.md, v3.md, v4.md, v5.md
+  roadmap-v2.md, v3.md, v4.md, v5.md
 ```
 
 ## Limitaciones actuales
 
-- Adjuntos almacenados en base64 en BD (max 2MB)
-- Sin notificaciones externas (email/push)
+- Adjuntos legacy en base64 (nuevos van a FileAsset)
 - Facturacion interna, no contabilidad fiscal oficial (sin SII/AEAT)
 - Sin 2FA ni rate limiting
-- Sin retry para llamadas a Gemini
-- Stock es single-almacen por tenant (sin multi-sede)
+- Sin retry para Gemini/GPS
+- Stock single-almacen por tenant
 - Devolucion posventa no revierte stock automaticamente
+- Service worker basico (manifest sin cache offline avanzado)
+- Cola de mensajes es pull-based (no cron automatico)

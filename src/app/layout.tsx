@@ -25,6 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full antialiased">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <AuthProvider>
           <ToastProvider>

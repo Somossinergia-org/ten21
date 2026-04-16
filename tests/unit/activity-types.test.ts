@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { ActivityAction, ActivityEntity } from "@/services/activity.service";
 
 describe("ActivityAction type coverage", () => {
-  it("includes all V3 actions", () => {
+  it("includes all V5 actions", () => {
     const actions: ActivityAction[] = [
       "purchase.created", "purchase.sent",
       "reception.created", "reception.completed",
@@ -19,17 +19,24 @@ describe("ActivityAction type coverage", () => {
       "stock.reception_in", "stock.sale_reserve", "stock.sale_release",
       "stock.delivery_out", "stock.manual_adjustment",
       "postsale.created", "postsale.updated", "postsale.closed",
+      "proof.created",
+      "automation.created", "automation.toggled",
+      "template.created",
+      "outbound.sent", "outbound.failed", "outbound.retried", "outbound.cancelled",
     ];
-    expect(actions.length).toBe(38);
+    expect(actions.length).toBe(46);
   });
 
-  it("includes all V3 entities", () => {
+  it("includes all V5 entities", () => {
     const entities: ActivityEntity[] = [
       "PurchaseOrder", "Reception", "Incident", "Delivery",
       "Product", "Supplier", "Vehicle",
       "User", "Customer", "SupplierInvoice", "Notification",
       "SalesOrder", "ProductInventory", "PostSaleTicket",
+      "DeliveryProof", "FileAsset",
+      "AutomationRule", "NotificationTemplate", "OutboundMessage",
+      "CustomerInvoice",
     ];
-    expect(entities.length).toBe(14);
+    expect(entities.length).toBe(20);
   });
 });

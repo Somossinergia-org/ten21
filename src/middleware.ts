@@ -23,5 +23,7 @@ export const config = {
     "/post-sales/:path*",
     "/finance/:path*",
     "/executive/:path*",
+    "/mobile/:path*",
+    "/automations/:path*",
   ],
 };

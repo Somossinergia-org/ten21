@@ -7,6 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
   AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain, Wallet,
   UserCircle, Bell, Receipt, Warehouse, HeadsetIcon, Gauge, TrendingUp, FileText,
+  Smartphone, Zap,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -37,8 +38,11 @@ const navGroups: NavGroup[] = [
     { label: "Vehiculos", href: "/vehicles", roles: ["JEFE", "REPARTO"], icon: <Truck size={16} /> },
     { label: "Entregas", href: "/vehicles/deliveries", roles: ["JEFE", "REPARTO"], icon: <MapPin size={16} /> },
     { label: "Agenda", href: "/vehicles/deliveries/calendar", roles: ["JEFE", "REPARTO"], icon: <Calendar size={16} /> },
+    { label: "Movil reparto", href: "/mobile/reparto", roles: ["REPARTO", "JEFE"], icon: <Smartphone size={16} /> },
+    { label: "Movil almacen", href: "/mobile/almacen", roles: ["ALMACEN", "JEFE"], icon: <Smartphone size={16} /> },
   ]},
   { title: "Sistema", items: [
+    { label: "Automatizaciones", href: "/automations", roles: ["JEFE"], icon: <Zap size={16} /> },
     { label: "Notificaciones", href: "/notifications", roles: ["JEFE", "ALMACEN", "REPARTO"], icon: <Bell size={16} /> },
     { label: "Tesoreria", href: "/finance/treasury", roles: ["JEFE"], icon: <Wallet size={16} /> },
     { label: "Facturas cliente", href: "/finance/invoices", roles: ["JEFE"], icon: <FileText size={16} /> },

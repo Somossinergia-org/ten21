@@ -33,8 +33,13 @@ model Tenant {
   salesOrders    SalesOrder[]
   stockMovements StockMovement[]
   postSaleTickets PostSaleTicket[]
-  customerInvoices CustomerInvoice[]
-  treasuryEntries TreasuryEntry[]
+  customerInvoices  CustomerInvoice[]
+  treasuryEntries   TreasuryEntry[]
+  fileAssets        FileAsset[]
+  deliveryProofs    DeliveryProof[]
+  outboundMessages  OutboundMessage[]
+  automationRules   AutomationRule[]
+  notifTemplates    NotificationTemplate[]
 }
 
 // ============================================================
@@ -326,6 +331,8 @@ model Delivery {
   deliveredAt     DateTime?
   startKm         Int?
   endKm           Int?
+  failedReason    String?
+  proofRequired   Boolean        @default(false)
   notes           String?
   tenantId        String
   tenant          Tenant         @relation(fields: [tenantId], references: [id])
@@ -334,6 +341,7 @@ model Delivery {
 
   lines           DeliveryLine[]
   postSaleTickets PostSaleTicket[]
+  proofs          DeliveryProof[]
 
   @@unique([tenantId, deliveryNumber])
   @@index([tenantId])
@@ -456,8 +464,11 @@ model Customer {
   city         String?
   postalCode   String?
   province     String?
-  notes        String?
-  active       Boolean  @default(true)
+  notes            String?
+  allowEmail       Boolean  @default(false)
+  allowWhatsApp    Boolean  @default(false)
+  preferredChannel String?
+  active           Boolean  @default(true)
   tenantId     String
   tenant       Tenant   @relation(fields: [tenantId], references: [id])
   createdAt    DateTime @default(now())
@@ -791,4 +802,175 @@ model TreasuryEntry {
   @@index([tenantId, status])
   @@index([tenantId, dueDate])
   @@index([sourceType, sourceId])
+}
+
+// ============================================================
+// FILE STORAGE (V5)
+// ============================================================
+model FileAsset {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  provider         String   @default("local") // local, vercel-blob, s3
+  storageKey       String
+  publicUrl        String?  @db.Text
+  mimeType         String
+  fileName         String
+  fileSize         Int
+  checksum         String?
+  uploadedById     String?
+  createdAt        DateTime @default(now())
+
+  deliveryProofs DeliveryProof[]
+
+  @@index([tenantId])
+}
+
+// ============================================================
+// PRUEBAS DE ENTREGA (V5)
+// ============================================================
+enum DeliveryProofType {
+  PHOTO
+  SIGNATURE
+  GPS_SNAPSHOT
+  NOTE
+}
+
+model DeliveryProof {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id])
+  deliveryId   String
+  delivery     Delivery          @relation(fields: [deliveryId], references: [id])
+  type         DeliveryProofType
+  fileAssetId  String?
+  fileAsset    FileAsset?        @relation(fields: [fileAssetId], references: [id])
+  note         String?
+  latitude     Decimal?
+  longitude    Decimal?
+  capturedAt   DateTime          @default(now())
+  capturedById String?
+  requestId    String?           // Idempotency key from offline sync
+  createdAt    DateTime          @default(now())
+
+  @@index([deliveryId])
+  @@index([tenantId])
+  @@index([requestId])
+}
+
+// ============================================================
+// DEVICE SUBSCRIPTIONS — Web Push (V5)
+// ============================================================
+model DeviceSubscription {
+  id          String    @id @default(cuid())
+  tenantId    String
+  userId      String
+  endpoint    String    @db.Text
+  p256dh      String
+  auth        String
+  deviceLabel String?
+  active      Boolean   @default(true)
+  lastSeenAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, endpoint])
+  @@index([tenantId, userId])
+}
+
+// ============================================================
+// PLANTILLAS DE NOTIFICACION (V5)
+// ============================================================
+enum MessageChannel {
+  INTERNAL
+  PUSH
+  EMAIL
+  WHATSAPP
+}
+
+model NotificationTemplate {
+  id        String         @id @default(cuid())
+  tenantId  String
+  tenant    Tenant         @relation(fields: [tenantId], references: [id])
+  code      String
+  channel   MessageChannel
+  eventType String
+  subject   String?
+  body      String         @db.Text
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  rules AutomationRule[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+// ============================================================
+// REGLAS DE AUTOMATIZACION (V5)
+// ============================================================
+enum AutomationTarget {
+  USER
+  CUSTOMER
+  ROLE
+}
+
+model AutomationRule {
+  id             String           @id @default(cuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  code           String
+  eventType      String
+  channel        MessageChannel
+  target         AutomationTarget
+  enabled        Boolean          @default(true)
+  conditionsJson Json?
+  templateId     String?
+  template       NotificationTemplate? @relation(fields: [templateId], references: [id])
+  createdById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, eventType])
+}
+
+// ============================================================
+// COLA DE MENSAJES SALIENTES (V5)
+// ============================================================
+enum OutboundMessageStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model OutboundMessage {
+  id            String                @id @default(cuid())
+  tenantId      String
+  tenant        Tenant                @relation(fields: [tenantId], references: [id])
+  channel       MessageChannel
+  targetType    String                // USER, CUSTOMER
+  targetId      String?
+  destination   String                // email address, phone number, push endpoint
+  subject       String?
+  body          String                @db.Text
+  eventType     String
+  sourceType    String?
+  sourceId      String?
+  status        OutboundMessageStatus @default(QUEUED)
+  attempts      Int                   @default(0)
+  maxAttempts   Int                   @default(3)
+  nextAttemptAt DateTime?
+  lastError     String?
+  sentAt        DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([status, nextAttemptAt])
+  @@index([eventType, sourceType, sourceId])
 }

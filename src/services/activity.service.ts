@@ -38,7 +38,15 @@ export type ActivityAction =
   | "stock.manual_adjustment"
   | "postsale.created"
   | "postsale.updated"
-  | "postsale.closed";
+  | "postsale.closed"
+  | "proof.created"
+  | "automation.created"
+  | "automation.toggled"
+  | "template.created"
+  | "outbound.sent"
+  | "outbound.failed"
+  | "outbound.retried"
+  | "outbound.cancelled";
 
 export type ActivityEntity =
   | "PurchaseOrder"
@@ -54,7 +62,13 @@ export type ActivityEntity =
   | "Notification"
   | "SalesOrder"
   | "ProductInventory"
-  | "PostSaleTicket";
+  | "PostSaleTicket"
+  | "DeliveryProof"
+  | "FileAsset"
+  | "AutomationRule"
+  | "NotificationTemplate"
+  | "OutboundMessage"
+  | "CustomerInvoice";
 
 type LogInput = {
   tenantId: string;
