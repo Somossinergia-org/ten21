@@ -16,5 +16,7 @@ export const config = {
     "/incidents/:path*",
     "/vehicles/:path*",
     "/settings/:path*",
+    "/customers/:path*",
+    "/notifications/:path*",
   ],
 };

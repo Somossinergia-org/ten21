@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { PrismaClient, Role, PurchaseOrderType, VehicleStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const SETUP_SECRET = "ten21-setup-2026";
+const SETUP_SECRET = process.env.SETUP_SECRET || "ten21-setup-2026";
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
-  if (searchParams.get("secret") !== SETUP_SECRET) {
+  if (!SETUP_SECRET || searchParams.get("secret") !== SETUP_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

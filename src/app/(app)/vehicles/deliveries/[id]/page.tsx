@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireRole, getTenantId } from "@/lib/tenant";
+import { requireRole, getTenantId, getCurrentUser } from "@/lib/tenant";
 import * as deliveryService from "@/services/delivery.service";
 import * as activityService from "@/services/activity.service";
 import * as attachmentService from "@/services/attachment.service";
@@ -23,10 +23,14 @@ export default async function DeliveryDetailPage({
 }) {
   await requireRole(["JEFE", "REPARTO"]);
   const tenantId = await getTenantId();
+  const user = await getCurrentUser();
   const { id } = await params;
 
   const delivery = await deliveryService.getDelivery(id, tenantId);
   if (!delivery) notFound();
+
+  // REPARTO can only see their own deliveries
+  if (user.role === "REPARTO" && delivery.assignedToId !== user.id) notFound();
 
   const [attachments, activityLogs] = await Promise.all([
     attachmentService.listForEntity(tenantId, "DELIVERY", id),
