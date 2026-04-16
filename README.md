@@ -1,6 +1,6 @@
-# TodoMueble — Plataforma de Gestion Operativa
+# TodoMueble — Plataforma de Gestion Operativa (V7.5 RC)
 
-Sistema SaaS de control operativo para tiendas de muebles y electrodomesticos. Conecta la operativa completa del negocio: pedidos a proveedor, recepcion de mercancia, deteccion automatica de incidencias, entregas a cliente con control de flota, e inteligencia artificial para el jefe.
+Sistema SaaS de control operativo para tiendas de muebles y electrodomesticos. Cubre el ciclo completo: compras, recepcion, inventario, ventas, entregas, posventa, facturacion, tesoreria, rentabilidad, automatizaciones omnicanal, PWA movil, billing SaaS, compliance RGPD y seguridad avanzada.
 
 ## Que NO es este sistema
 
@@ -241,12 +241,12 @@ src/
 prisma/
   schema.prisma         # 52 modelos, 55+ enums
   seed.ts               # Datos demo TodoMueble Guardamar
-  backfill-customers.ts # Migracion Delivery->Customer
   migrations/           # 12 migraciones
 tests/
-  unit/                 # 163 tests en 20 archivos
+  unit/                 # 174 tests en 21 archivos
 docs/
   plan_arquitectura v2-v7, reglas-dominio v2-v7, roadmap v2-v7
+  release-candidate/    # Audit docs, checklist, RC report
 ```
 
 ## Limitaciones actuales
