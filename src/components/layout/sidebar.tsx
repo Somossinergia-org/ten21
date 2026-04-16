@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
-  AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X,
+  AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -29,6 +29,7 @@ const navGroups: NavGroup[] = [
     { label: "Agenda", href: "/vehicles/deliveries/calendar", roles: ["JEFE", "REPARTO"], icon: <Calendar size={16} /> },
   ]},
   { title: "Sistema", items: [
+    { label: "Inteligencia IA", href: "/settings/ai", roles: ["JEFE"], icon: <Brain size={16} /> },
     { label: "Usuarios", href: "/settings/users", roles: ["JEFE"], icon: <Users size={16} /> },
     { label: "Estadisticas", href: "/settings/stats", roles: ["JEFE"], icon: <BarChart3 size={16} /> },
   ]},
