@@ -1,14 +1,17 @@
-import { requireRole } from "@/lib/tenant";
+import { requireRole, getTenantId } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
+import * as inventoryService from "@/services/inventory.service";
+import { InventoryClient } from "./inventory-client";
 
 export default async function InventoryPage() {
   await requireRole(["JEFE", "ALMACEN"]);
+  const tenantId = await getTenantId();
+  const inventory = await inventoryService.listInventory(tenantId);
+
   return (
     <div>
       <PageHeader title="Inventario" />
-      <div className="mt-6 rounded-xl border border-[#1a2d4a] bg-[#0a1628]/50 p-12 text-center">
-        <p className="text-sm text-slate-400">Modulo de inventario en construccion</p>
-      </div>
+      <InventoryClient inventory={inventory} />
     </div>
   );
 }

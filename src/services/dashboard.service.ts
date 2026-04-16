@@ -32,12 +32,36 @@ export async function getKpis(tenantId: string) {
     }),
   ]);
 
+  const [
+    pendingSales,
+    partiallyReservedSales,
+    openPostSaleTickets,
+    lowStockProducts,
+  ] = await Promise.all([
+    db.salesOrder.count({
+      where: { tenantId, status: { in: ["CONFIRMED", "RESERVED", "PARTIALLY_RESERVED"] } },
+    }),
+    db.salesOrder.count({
+      where: { tenantId, status: "PARTIALLY_RESERVED" },
+    }),
+    db.postSaleTicket.count({
+      where: { tenantId, status: { in: ["OPEN", "IN_PROGRESS", "WAITING_SUPPLIER"] } },
+    }),
+    db.productInventory.count({
+      where: { tenantId, available: { lte: 0 } },
+    }),
+  ]);
+
   return {
     openIncidents,
     pendingOrders,
     todayReceptionsOk,
     vehiclesInUse,
     activeDeliveries,
+    pendingSales,
+    partiallyReservedSales,
+    openPostSaleTickets,
+    lowStockProducts,
   };
 }
 

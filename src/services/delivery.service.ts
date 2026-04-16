@@ -180,6 +180,9 @@ export async function completeDelivery(
 ) {
   const delivery = await db.delivery.findFirst({
     where: { id, tenantId, status: "IN_TRANSIT" },
+    include: {
+      lines: { select: { productId: true, quantity: true } },
+    },
   });
   if (!delivery) throw new Error("Entrega no encontrada o no esta en ruta");
 
@@ -198,6 +201,48 @@ export async function completeDelivery(
         where: { id: delivery.vehicleId },
         data: { status: "AVAILABLE" },
       });
+    }
+
+    // DELIVERY_OUT: reduce stock for delivered products (only on success)
+    if (!failed) {
+      for (const line of delivery.lines) {
+        if (!line.productId) continue;
+
+        // Prevent duplicate DELIVERY_OUT
+        const existing = await tx.stockMovement.findFirst({
+          where: { tenantId, productId: line.productId, type: "DELIVERY_OUT", referenceType: "Delivery", referenceId: id },
+        });
+        if (existing) continue;
+
+        const inv = await tx.productInventory.findFirst({
+          where: { tenantId, productId: line.productId },
+        });
+        if (!inv) continue;
+
+        await tx.productInventory.update({
+          where: { id: inv.id },
+          data: {
+            onHand: Math.max(0, inv.onHand - line.quantity),
+            reserved: Math.max(0, inv.reserved - line.quantity),
+          },
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            tenantId, productId: line.productId,
+            type: "DELIVERY_OUT", quantity: line.quantity,
+            referenceType: "Delivery", referenceId: id,
+          },
+        });
+      }
+
+      // Update linked SalesOrder to DELIVERED if applicable
+      if (delivery.salesOrderId) {
+        await tx.salesOrder.update({
+          where: { id: delivery.salesOrderId },
+          data: { status: "DELIVERED", deliveredAt: new Date() },
+        });
+      }
     }
   });
 }

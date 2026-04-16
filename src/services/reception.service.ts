@@ -249,6 +249,41 @@ export async function createReception(
       data: { status: newPoStatus },
     });
 
+    // 10. Update ProductInventory — RECEPTION_IN for useful quantity
+    for (const line of data.lines) {
+      const poLine = poLineMap.get(line.purchaseOrderLineId);
+      if (!poLine?.product) continue;
+
+      const usefulQty = line.quantityReceived - line.quantityDamaged;
+      if (usefulQty <= 0) continue;
+
+      // Find or create inventory record
+      let inv = await tx.productInventory.findFirst({
+        where: { tenantId, productId: poLine.productId },
+      });
+      if (!inv) {
+        inv = await tx.productInventory.create({
+          data: { tenantId, productId: poLine.productId, onHand: 0, reserved: 0, available: 0 },
+        });
+      }
+
+      await tx.productInventory.update({
+        where: { id: inv.id },
+        data: {
+          onHand: inv.onHand + usefulQty,
+          available: inv.available + usefulQty,
+        },
+      });
+
+      await tx.stockMovement.create({
+        data: {
+          tenantId, productId: poLine.productId,
+          type: "RECEPTION_IN", quantity: usefulQty,
+          referenceType: "Reception", referenceId: reception.id,
+        },
+      });
+    }
+
     return {
       reception,
       incidentsCreated: allIncidents.length,
