@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { LogOut, Bell } from "lucide-react";
 import { GlobalSearch } from "./global-search";
 import type { Role } from "@prisma/client";
 
@@ -20,40 +21,52 @@ type HeaderProps = {
 
 export function Header({ userName, userRole, tenantName, openIncidents = 0 }: HeaderProps) {
   return (
-    <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
-      <div className="text-sm text-gray-500 hidden sm:block">
-        {tenantName}
+    <header className="flex h-16 items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-sm px-4 lg:px-6">
+      {/* Left: tenant */}
+      <div className="hidden sm:block">
+        <p className="text-sm font-semibold text-gray-900">{tenantName}</p>
       </div>
-      <div className="sm:hidden" />
+      <div className="sm:hidden w-10" /> {/* Spacer for hamburger */}
 
-      <div className="flex items-center gap-3">
-        {/* Global search */}
+      {/* Center: search */}
+      <div className="flex-1 flex justify-center px-4">
         <GlobalSearch />
+      </div>
 
-        {/* Notification badge */}
+      {/* Right: notifications + user */}
+      <div className="flex items-center gap-2">
+        {/* Notifications */}
         {openIncidents > 0 && (
           <Link
             href="/incidents?status=REGISTERED"
-            className="relative flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors"
+            className="relative flex items-center gap-1.5 rounded-xl bg-red-50 border border-red-100 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors"
           >
+            <Bell size={14} />
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
             </span>
-            {openIncidents} incidencia{openIncidents !== 1 ? "s" : ""}
+            <span className="hidden sm:inline">{openIncidents}</span>
           </Link>
         )}
 
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-900">{userName}</p>
-          <p className="text-xs text-gray-500">{roleLabels[userRole]}</p>
+        {/* User */}
+        <div className="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <span className="text-white font-bold text-xs">{userName.charAt(0)}</span>
+          </div>
+          <div className="hidden sm:block text-right">
+            <p className="text-sm font-semibold text-gray-900 leading-tight">{userName}</p>
+            <p className="text-[10px] text-gray-500 font-medium">{roleLabels[userRole]}</p>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-gray-400 hover:text-red-500 transition-colors ml-1"
+            title="Cerrar sesion"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          Salir
-        </button>
       </div>
     </header>
   );
