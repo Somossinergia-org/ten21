@@ -358,3 +358,41 @@ model Attachment {
   @@index([tenantId, entity, entityId])
   @@index([tenantId, createdAt])
 }
+
+// ============================================================
+// FACTURAS DE PROVEEDOR
+// ============================================================
+enum InvoiceStatus {
+  PENDING    // Pendiente de revision
+  VALIDATED  // Validada (cuadra con pedido)
+  MISMATCH   // No cuadra (diferencia de importe)
+  PAID       // Pagada
+}
+
+model SupplierInvoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String?
+  supplierId      String?
+  supplierName    String?
+  supplierNif     String?
+  purchaseOrderId String?
+  concept         String?
+  baseAmount      Decimal?
+  taxAmount       Decimal?
+  totalAmount     Decimal?
+  taxRate         Decimal?
+  invoiceDate     DateTime?
+  dueDate         DateTime?
+  status          InvoiceStatus @default(PENDING)
+  pdfDataUrl      String?       @db.Text
+  extractedData   Json?
+  notes           String?
+  tenantId        String
+  createdById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+}
