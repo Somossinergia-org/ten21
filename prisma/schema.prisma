@@ -15,6 +15,8 @@ model Tenant {
   name      String
   slug      String   @unique
   active    Boolean  @default(true)
+  planCode  String?
+  trialEndsAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -40,6 +42,15 @@ model Tenant {
   outboundMessages  OutboundMessage[]
   automationRules   AutomationRule[]
   notifTemplates    NotificationTemplate[]
+  tenantConfig      TenantConfig?
+  tenantBranding    TenantBranding?
+  tenantModules     TenantModule[]
+  tenantTemplates   TenantTemplate[]
+  importJobs        ImportJob[]
+  tenantOnboarding  TenantOnboarding?
+  featureFlags      FeatureFlag[]
+  supportCases      SupportCase[]
+  healthEvents      SystemHealthEvent[]
 }
 
 // ============================================================
@@ -973,4 +984,247 @@ model OutboundMessage {
   @@index([tenantId, createdAt])
   @@index([status, nextAttemptAt])
   @@index([eventType, sourceType, sourceId])
+}
+
+// ============================================================
+// CONFIGURACION POR TENANT (V6)
+// ============================================================
+model TenantConfig {
+  id           String   @id @default(cuid())
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  businessName String
+  tradeName    String?
+  taxId        String?
+  phone        String?
+  email        String?
+  address      String?
+  city         String?
+  province     String?
+  postalCode   String?
+  country      String   @default("ES")
+  timezone     String   @default("Europe/Madrid")
+  currency     String   @default("EUR")
+  language     String   @default("es")
+  settingsJson Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TenantBranding {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  logoFileAssetId  String?
+  primaryColor     String?
+  secondaryColor   String?
+  accentColor      String?
+  appName          String?
+  heroText         String?
+  updatedAt        DateTime @updatedAt
+}
+
+model TenantModule {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  moduleCode String
+  enabled    Boolean  @default(true)
+  configJson Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantId, moduleCode])
+  @@index([tenantId])
+}
+
+enum TenantTemplateType {
+  NOTIFICATION
+  AUTOMATION
+  DOCUMENT
+  DASHBOARD_WIDGET
+}
+
+model TenantTemplate {
+  id          String             @id @default(cuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  type        TenantTemplateType
+  code        String
+  name        String
+  payloadJson Json?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([tenantId, type, code])
+  @@index([tenantId])
+}
+
+// ============================================================
+// IMPORTACIONES (V6)
+// ============================================================
+enum ImportJobType {
+  PRODUCTS
+  SUPPLIERS
+  CUSTOMERS
+  VEHICLES
+  SALES
+  PURCHASES
+}
+
+enum ImportJobStatus {
+  UPLOADED
+  VALIDATING
+  READY
+  IMPORTING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+model ImportJob {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  type            ImportJobType
+  status          ImportJobStatus @default(UPLOADED)
+  fileAssetId     String?
+  summaryJson     Json?
+  errorReportJson Json?
+  createdById     String
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+// ============================================================
+// ONBOARDING (V6)
+// ============================================================
+enum OnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  CONFIGURED
+  SEEDED
+  READY
+  LIVE
+}
+
+model TenantOnboarding {
+  id            String           @id @default(cuid())
+  tenantId      String           @unique
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  status        OnboardingStatus @default(NOT_STARTED)
+  checklistJson Json?
+  currentStep   Int              @default(0)
+  activatedById String?
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+// ============================================================
+// FEATURE FLAGS (V6)
+// ============================================================
+enum FeatureFlagScope {
+  GLOBAL
+  TENANT
+}
+
+model FeatureFlag {
+  id        String           @id @default(cuid())
+  tenantId  String?
+  tenant    Tenant?          @relation(fields: [tenantId], references: [id])
+  code      String
+  enabled   Boolean          @default(false)
+  scope     FeatureFlagScope @default(GLOBAL)
+  notes     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([code, scope])
+  @@index([tenantId])
+}
+
+// ============================================================
+// SOPORTE INTERNO (V6)
+// ============================================================
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum SupportCasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model SupportCase {
+  id           String              @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?             @relation(fields: [tenantId], references: [id])
+  source       String              @default("INTERNAL")
+  status       SupportCaseStatus   @default(OPEN)
+  priority     SupportCasePriority @default(NORMAL)
+  title        String
+  description  String              @db.Text
+  entityType   String?
+  entityId     String?
+  assignedToId String?
+  reportedById String?
+  resolution   String?
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ============================================================
+// OBSERVABILIDAD (V6)
+// ============================================================
+enum HealthSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum HealthCategory {
+  IMPORT
+  INTEGRATION
+  AUTOMATION
+  AUTH
+  STORAGE
+  BILLING
+  UNKNOWN
+}
+
+model SystemHealthEvent {
+  id          String         @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?        @relation(fields: [tenantId], references: [id])
+  severity    HealthSeverity
+  category    HealthCategory
+  code        String
+  message     String
+  payloadJson Json?
+  resolved    Boolean        @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([tenantId])
+  @@index([severity])
+  @@index([createdAt])
 }

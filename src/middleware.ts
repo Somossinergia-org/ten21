@@ -25,5 +25,7 @@ export const config = {
     "/executive/:path*",
     "/mobile/:path*",
     "/automations/:path*",
+    "/admin/:path*",
+    "/onboarding/:path*",
   ],
 };

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
   AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain, Wallet,
   UserCircle, Bell, Receipt, Warehouse, HeadsetIcon, Gauge, TrendingUp, FileText,
-  Smartphone, Zap,
+  Smartphone, Zap, Settings, Shield, Activity, Flag,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -51,6 +51,13 @@ const navGroups: NavGroup[] = [
     { label: "Inteligencia IA", href: "/settings/ai", roles: ["JEFE"], icon: <Brain size={16} /> },
     { label: "Usuarios", href: "/settings/users", roles: ["JEFE"], icon: <Users size={16} /> },
     { label: "Estadisticas", href: "/settings/stats", roles: ["JEFE"], icon: <BarChart3 size={16} /> },
+    { label: "Mi tienda", href: "/settings/tenant", roles: ["JEFE"], icon: <Settings size={16} /> },
+    { label: "Modulos", href: "/settings/modules", roles: ["JEFE"], icon: <Package size={16} /> },
+  ]},
+  { title: "Admin", items: [
+    { label: "Tenants", href: "/admin/tenants", roles: ["JEFE"], icon: <Shield size={16} /> },
+    { label: "Salud", href: "/admin/health", roles: ["JEFE"], icon: <Activity size={16} /> },
+    { label: "Feature Flags", href: "/admin/feature-flags", roles: ["JEFE"], icon: <Flag size={16} /> },
   ]},
 ];
 

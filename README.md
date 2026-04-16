@@ -170,6 +170,17 @@ CustomerInvoice (DRAFT->ISSUED->PARTIALLY_PAID->PAID)
 - Consentimiento por canal: allowEmail, allowWhatsApp por cliente
 - Panel JEFE: reglas, plantillas, cola, mensajes fallidos, reenvio manual
 
+### Productizacion SaaS (V6)
+- TenantConfig: razon social, NIF, contacto, zona horaria, moneda, idioma
+- TenantBranding: logo, colores, nombre de app por tenant
+- TenantModule: activar/desactivar modulos por tienda
+- TenantOnboarding: wizard de activacion (NOT_STARTED -> LIVE)
+- ImportJob: importacion de datos con validacion y preview
+- FeatureFlag: despliegue gradual por tenant o global
+- SystemHealthEvent: observabilidad (INFO/WARNING/ERROR/CRITICAL)
+- SupportCase: soporte interno
+- Panel admin: tenants, flags, salud del sistema
+
 ### Clientes
 - Entidad centralizada con historial de entregas, ventas y facturas
 - Vista 360: datos, direccion, entregas, ventas, tickets posventa
@@ -206,16 +217,14 @@ src/
   components/           # UI (layout, agent, attachments, timeline, dashboard)
   lib/                  # Auth, DB, tenant helpers, validaciones Zod
 prisma/
-  schema.prisma         # 33 modelos, 30+ enums
+  schema.prisma         # 42 modelos, 40+ enums
   seed.ts               # Datos demo TodoMueble Guardamar
   backfill-customers.ts # Migracion Delivery->Customer
-  migrations/           # 10 migraciones
+  migrations/           # 11 migraciones
 tests/
-  unit/                 # 125 tests (validaciones, estados, financieros, proofs, automations)
+  unit/                 # 137 tests
 docs/
-  plan_arquitectura.md, v3.md, v4.md, v5.md
-  reglas-dominio.md, v3.md, v4.md, v5.md
-  roadmap-v2.md, v3.md, v4.md, v5.md
+  plan_arquitectura v2-v6, reglas-dominio v2-v6, roadmap v2-v6
 ```
 
 ## Limitaciones actuales
@@ -228,3 +237,7 @@ docs/
 - Devolucion posventa no revierte stock automaticamente
 - Service worker basico (manifest sin cache offline avanzado)
 - Cola de mensajes es pull-based (no cron automatico)
+- Panel admin accesible por JEFE (pendiente rol SUPERADMIN dedicado)
+- Branding por tenant en config, pendiente aplicar dinamicamente en UI
+- Importaciones: estructura lista, parser CSV/XLSX pendiente
+- Sin billing/suscripcion SaaS real
