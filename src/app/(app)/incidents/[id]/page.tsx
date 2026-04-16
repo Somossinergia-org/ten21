@@ -126,7 +126,7 @@ export default async function IncidentDetailPage({
           <p className="text-xs font-medium uppercase text-gray-500">Recepcion</p>
           <Link
             href={`/reception/${incident.reception.id}`}
-            className="mt-1 block text-sm font-mono text-blue-600 hover:text-blue-800"
+            className="mt-1 block text-sm font-mono text-cyan-400 hover:text-cyan-300"
           >
             {incident.reception.receptionNumber}
           </Link>

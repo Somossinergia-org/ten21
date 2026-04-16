@@ -73,7 +73,7 @@ export function GlobalSearch() {
       {/* Trigger button */}
       <button
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 100); }}
-        className="hidden sm:flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-100 transition-colors"
+        className="hidden sm:flex items-center gap-2 rounded-lg border border-[#1a2d4a] bg-[#0a1628] px-3 py-1.5 text-xs text-slate-500 hover:border-cyan-500/30 transition-colors"
       >
         <Search size={14} />
         <span>Buscar...</span>
@@ -91,16 +91,15 @@ export function GlobalSearch() {
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh] bg-black/40" onClick={() => { setOpen(false); setQuery(""); }}>
-          <div className="w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Search input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b">
+          <div className="w-full max-w-lg mx-4 bg-[#0a1628] border border-[#1a2d4a] rounded-2xl shadow-2xl shadow-cyan-500/5 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#1a2d4a]">
               <Search size={18} className="text-gray-400 flex-shrink-0" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar pedidos, incidencias, entregas, productos..."
-                className="flex-1 text-sm outline-none"
+                className="flex-1 text-sm outline-none bg-transparent text-slate-200 placeholder:text-slate-500"
                 autoFocus
               />
               {query && (
@@ -126,12 +125,12 @@ export function GlobalSearch() {
                     <button
                       key={`${r.type}-${r.id}`}
                       onClick={() => go(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-cyan-500/5 text-left transition-colors"
                     >
                       <span className="text-lg flex-shrink-0">{typeIcons[r.type] || "📄"}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{r.title}</p>
-                        {r.sub && <p className="text-xs text-gray-400 truncate">{r.sub}</p>}
+                        <p className="text-sm font-medium text-slate-200 truncate">{r.title}</p>
+                        {r.sub && <p className="text-xs text-slate-500 truncate">{r.sub}</p>}
                       </div>
                       <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${typeColors[r.type] || "bg-gray-100"}`}>
                         {r.type}

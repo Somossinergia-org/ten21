@@ -32,13 +32,13 @@ export default async function PurchasesPage() {
         <div className="flex items-center gap-2">
           <a
             href="/api/export/purchases"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-[#1a2d4a] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-cyan-500/30 hover:text-cyan-400 transition-colors"
           >
             Exportar Excel
           </a>
           <Link
             href="/purchases/new"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors"
           >
             Nuevo pedido
           </Link>
@@ -87,7 +87,7 @@ export default async function PurchasesPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/purchases/${order.id}`}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
                       >
                         Ver
                       </Link>

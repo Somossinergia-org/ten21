@@ -84,7 +84,7 @@ export function VoiceBriefing({ data }: { data: BriefingData }) {
       className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
         playing
           ? "bg-red-500 text-white hover:bg-red-600 animate-pulse"
-          : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/25"
+          : "bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 glow-cyan"
       }`}
     >
       {playing ? (

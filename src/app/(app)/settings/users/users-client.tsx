@@ -74,7 +74,7 @@ export function UsersClient({ users }: { users: User[] }) {
   return (
     <div className="mt-6 space-y-6">
       <div className="flex justify-end">
-        <button onClick={() => setShowForm(!showForm)} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button onClick={() => setShowForm(!showForm)} className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors">
           {showForm ? "Cancelar" : "Nuevo usuario"}
         </button>
       </div>
@@ -92,7 +92,7 @@ export function UsersClient({ users }: { users: User[] }) {
               <option value="JEFE">Jefe</option>
             </select>
           </div>
-          <button type="submit" disabled={loading} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors disabled:opacity-50">
             {loading ? "Creando..." : "Crear usuario"}
           </button>
         </form>
@@ -125,7 +125,7 @@ export function UsersClient({ users }: { users: User[] }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right space-x-2">
-                    <button onClick={() => { setPwUserId(u.id); setNewPw(""); }} className="text-xs text-blue-600 hover:text-blue-800">Contraseña</button>
+                    <button onClick={() => { setPwUserId(u.id); setNewPw(""); }} className="text-xs text-cyan-400 hover:text-cyan-300">Contraseña</button>
                     <button onClick={() => handleToggle(u.id)} className="text-xs text-gray-500 hover:text-gray-700">
                       {u.active ? "Desactivar" : "Activar"}
                     </button>
@@ -144,7 +144,7 @@ export function UsersClient({ users }: { users: User[] }) {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Cambiar contraseña</h3>
             <input value={newPw} onChange={(e) => setNewPw(e.target.value)} type="password" placeholder="Nueva contraseña (min 6)" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm mb-4" />
             <div className="flex gap-2">
-              <button onClick={handleChangePw} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Cambiar</button>
+              <button onClick={handleChangePw} className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors">Cambiar</button>
               <button onClick={() => setPwUserId(null)} className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
             </div>
           </div>

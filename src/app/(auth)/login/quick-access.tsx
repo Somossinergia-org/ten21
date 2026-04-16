@@ -69,7 +69,7 @@ export function QuickAccess({ tenantId }: { tenantId: string }) {
           <div className="w-full border-t border-gray-200" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-gray-400 uppercase tracking-wider font-medium">Acceso rapido</span>
+          <span className="bg-[#050a14] px-3 text-cyan-500/50 uppercase tracking-wider font-medium">Acceso rapido</span>
         </div>
       </div>
 

@@ -45,7 +45,7 @@ export function LoginForm({ tenants }: { tenants: Tenant[] }) {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Tenant selector */}
       <div>
-        <label htmlFor="tenant" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="tenant" className="block text-sm font-medium text-slate-400 mb-1">
           Tienda
         </label>
         <select
@@ -66,7 +66,7 @@ export function LoginForm({ tenants }: { tenants: Tenant[] }) {
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-1">
           Email
         </label>
         <input
@@ -82,7 +82,7 @@ export function LoginForm({ tenants }: { tenants: Tenant[] }) {
 
       {/* Password */}
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="password" className="block text-sm font-medium text-slate-400 mb-1">
           Contraseña
         </label>
         <input
@@ -107,7 +107,7 @@ export function LoginForm({ tenants }: { tenants: Tenant[] }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2.5 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {loading ? "Entrando..." : "Entrar"}
       </button>

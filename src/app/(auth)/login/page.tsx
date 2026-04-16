@@ -20,10 +20,13 @@ export default async function LoginPage() {
     <div className="flex min-h-full flex-1 items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center mx-auto mb-4 animate-glow">
+            <span className="text-white font-black text-lg">T</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
             Ten21
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-500">
             Gestion de tienda
           </p>
         </div>
@@ -39,7 +42,7 @@ export default async function LoginPage() {
             <div className="w-full border-t border-gray-200" />
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-gray-400 uppercase tracking-wider font-medium">
+            <span className="bg-[#050a14] px-3 text-slate-600 uppercase tracking-wider font-medium">
               O entra con tus datos
             </span>
           </div>

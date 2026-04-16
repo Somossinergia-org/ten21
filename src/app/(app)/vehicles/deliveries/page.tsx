@@ -26,7 +26,7 @@ export default async function DeliveriesPage() {
         </div>
         <Link
           href="/vehicles/deliveries/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-sm font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors"
         >
           Nueva entrega
         </Link>
@@ -74,7 +74,7 @@ export default async function DeliveriesPage() {
                         : new Date(d.createdAt).toLocaleDateString("es-ES")}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/vehicles/deliveries/${d.id}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                      <Link href={`/vehicles/deliveries/${d.id}`} className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
                         Ver
                       </Link>
                     </td>

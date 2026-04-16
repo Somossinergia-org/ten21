@@ -45,7 +45,7 @@ export default async function IncidentsPage({
         </div>
         <a
           href="/api/export/incidents"
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-lg border border-[#1a2d4a] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-cyan-500/30 hover:text-cyan-400 transition-colors"
         >
           Exportar Excel
         </a>
@@ -127,7 +127,7 @@ export default async function IncidentsPage({
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/incidents/${inc.id}`}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
                       >
                         Ver
                       </Link>
