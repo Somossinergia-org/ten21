@@ -17,6 +17,10 @@ model Tenant {
   active    Boolean  @default(true)
   planCode  String?
   trialEndsAt DateTime?
+  suspendedAt DateTime?
+  suspensionReason String?
+  billingStatusSnapshot String?
+  complianceStatusSnapshot String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -51,6 +55,14 @@ model Tenant {
   featureFlags      FeatureFlag[]
   supportCases      SupportCase[]
   healthEvents      SystemHealthEvent[]
+  subscription      TenantSubscription?
+  billingInvoices   BillingInvoice[]
+  usageMetrics      UsageMetric[]
+  billingEvents     BillingEvent[]
+  dataExports       DataExportRequest[]
+  dataDeletions     DataDeletionRequest[]
+  securityEvents    SecurityEvent[]
+  backupJobs        BackupJob[]
 }
 
 // ============================================================
@@ -69,6 +81,9 @@ model User {
   password  String
   role      Role     @default(ALMACEN)
   active    Boolean  @default(true)
+  lastLoginAt      DateTime?
+  failedLoginCount Int      @default(0)
+  lockedUntil      DateTime?
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   createdAt DateTime @default(now())
@@ -1227,4 +1242,293 @@ model SystemHealthEvent {
   @@index([tenantId])
   @@index([severity])
   @@index([createdAt])
+}
+
+// ============================================================
+// BILLING SAAS (V7)
+// ============================================================
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model SubscriptionPlan {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  description  String?
+  billingCycle BillingCycle @default(MONTHLY)
+  priceCents   Int
+  currency     String       @default("EUR")
+  active       Boolean      @default(true)
+  featuresJson Json?
+  limitsJson   Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  subscriptions TenantSubscription[]
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  PAUSED
+  EXPIRED
+}
+
+enum BillingProvider {
+  STRIPE
+  MANUAL
+}
+
+model TenantSubscription {
+  id                     String             @id @default(cuid())
+  tenantId               String             @unique
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id])
+  planId                 String
+  plan                   SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status                 SubscriptionStatus @default(TRIAL)
+  provider               BillingProvider    @default(MANUAL)
+  providerCustomerId     String?
+  providerSubscriptionId String?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  trialStartsAt          DateTime?
+  trialEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  cancelledAt            DateTime?
+  pausedAt               DateTime?
+  reactivatedAt          DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  invoices BillingInvoice[]
+
+  @@index([status])
+}
+
+enum BillingInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+  FAILED
+}
+
+model BillingInvoice {
+  id                   String              @id @default(cuid())
+  tenantId             String
+  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+  tenantSubscriptionId String?
+  subscription         TenantSubscription? @relation(fields: [tenantSubscriptionId], references: [id])
+  externalInvoiceId    String?
+  status               BillingInvoiceStatus @default(DRAFT)
+  amountCents          Int
+  currency             String              @default("EUR")
+  issuedAt             DateTime?
+  dueAt                DateTime?
+  paidAt               DateTime?
+  hostedUrl            String?
+  pdfUrl               String?
+  metadataJson         Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model UsageMetric {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  metricCode   String
+  metricValue  Int
+  snapshotDate DateTime @default(now())
+  periodKey    String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  @@unique([tenantId, metricCode, periodKey])
+  @@index([tenantId])
+}
+
+enum BillingEventSource {
+  WEBHOOK
+  MANUAL
+  SYSTEM
+}
+
+model BillingEvent {
+  id              String             @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?            @relation(fields: [tenantId], references: [id])
+  type            String
+  source          BillingEventSource
+  externalEventId String?
+  payloadJson     Json?
+  processed       Boolean            @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime           @default(now())
+
+  @@unique([source, externalEventId])
+  @@index([tenantId])
+  @@index([processed])
+}
+
+// ============================================================
+// COMPLIANCE / RGPD (V7)
+// ============================================================
+enum DataExportType {
+  FULL_EXPORT
+  GDPR_EXPORT
+  AUDIT_EXPORT
+}
+
+enum DataExportStatus {
+  REQUESTED
+  PROCESSING
+  READY
+  EXPIRED
+  FAILED
+}
+
+model DataExportRequest {
+  id            String           @id @default(cuid())
+  tenantId      String
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  requestedById String
+  type          DataExportType
+  status        DataExportStatus @default(REQUESTED)
+  fileAssetId   String?
+  expiresAt     DateTime?
+  reason        String?
+  createdAt     DateTime         @default(now())
+  completedAt   DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum DataDeletionType {
+  CUSTOMER_DATA
+  TENANT_DATA
+}
+
+enum DataDeletionStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model DataDeletionRequest {
+  id               String             @id @default(cuid())
+  tenantId         String
+  tenant           Tenant             @relation(fields: [tenantId], references: [id])
+  requestedById    String
+  type             DataDeletionType
+  targetEntityType String?
+  targetEntityId   String?
+  status           DataDeletionStatus @default(REQUESTED)
+  reason           String
+  approvedById     String?
+  createdAt        DateTime           @default(now())
+  completedAt      DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+// ============================================================
+// SECURITY (V7)
+// ============================================================
+enum SecurityEventSeverity {
+  INFO
+  WARNING
+  HIGH
+  CRITICAL
+}
+
+enum SecurityEventType {
+  LOGIN_FAILED
+  LOGIN_SUCCESS
+  PASSWORD_CHANGED
+  MFA_ENABLED
+  MFA_DISABLED
+  SESSION_REVOKED
+  RATE_LIMIT_HIT
+  ADMIN_ACCESS
+  SUSPICIOUS_ACTIVITY
+  ACCOUNT_LOCKED
+}
+
+model SecurityEvent {
+  id          String                @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?               @relation(fields: [tenantId], references: [id])
+  userId      String?
+  severity    SecurityEventSeverity
+  type        SecurityEventType
+  ipAddress   String?
+  userAgent   String?
+  payloadJson Json?
+  createdAt   DateTime              @default(now())
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+enum MfaType {
+  TOTP
+}
+
+model UserMfa {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  tenantId            String
+  type                MfaType  @default(TOTP)
+  secretEncrypted     String   @db.Text
+  recoveryCodesHash   String   @db.Text
+  enabled             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================================
+// BACKUPS (V7)
+// ============================================================
+enum BackupType {
+  TENANT_EXPORT
+  SYSTEM_BACKUP
+}
+
+enum BackupStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model BackupJob {
+  id           String       @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?      @relation(fields: [tenantId], references: [id])
+  type         BackupType
+  status       BackupStatus @default(QUEUED)
+  storageKey   String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  metadataJson Json?
+  createdAt    DateTime     @default(now())
+
+  @@index([tenantId])
+  @@index([status])
 }

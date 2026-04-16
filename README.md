@@ -181,6 +181,28 @@ CustomerInvoice (DRAFT->ISSUED->PARTIALLY_PAID->PAID)
 - SupportCase: soporte interno
 - Panel admin: tenants, flags, salud del sistema
 
+### Billing SaaS y Lifecycle (V7)
+- SubscriptionPlan: planes con precio, ciclo, features y limites
+- TenantSubscription: TRIAL -> ACTIVE -> PAST_DUE -> CANCELLED/PAUSED/EXPIRED
+- UsageMetric: snapshots de uso por periodo (users, customers, products, sales)
+- BillingInvoice: facturas de suscripcion
+- BillingEvent: webhooks idempotentes
+- Restricted Mode: cliente con impago mantiene acceso a billing y export
+- Planes demo: Starter, Growth, Pro
+
+### Compliance RGPD (V7)
+- DataExportRequest: exportacion FULL/GDPR/AUDIT con expiracion 7 dias
+- DataDeletionRequest: anonimizacion con aprobacion manual
+- Conservacion obligatoria de datos financieros
+- Panel admin para aprobar solicitudes
+
+### Seguridad Avanzada (V7)
+- MFA TOTP con QR y 8 recovery codes
+- SecurityEvent: login failed, MFA on/off, rate limit, admin access
+- User lockout: 5 fallos -> bloqueo 15 min
+- Rate limiter in-memory por key + endpoint
+- AES-256-GCM para secretos MFA
+
 ### Clientes
 - Entidad centralizada con historial de entregas, ventas y facturas
 - Vista 360: datos, direccion, entregas, ventas, tickets posventa
@@ -217,22 +239,25 @@ src/
   components/           # UI (layout, agent, attachments, timeline, dashboard)
   lib/                  # Auth, DB, tenant helpers, validaciones Zod
 prisma/
-  schema.prisma         # 42 modelos, 40+ enums
+  schema.prisma         # 52 modelos, 55+ enums
   seed.ts               # Datos demo TodoMueble Guardamar
   backfill-customers.ts # Migracion Delivery->Customer
-  migrations/           # 11 migraciones
+  migrations/           # 12 migraciones
 tests/
-  unit/                 # 137 tests
+  unit/                 # 163 tests en 20 archivos
 docs/
-  plan_arquitectura v2-v6, reglas-dominio v2-v6, roadmap v2-v6
+  plan_arquitectura v2-v7, reglas-dominio v2-v7, roadmap v2-v7
 ```
 
 ## Limitaciones actuales
 
 - Adjuntos legacy en base64 (nuevos van a FileAsset)
 - Facturacion interna, no contabilidad fiscal oficial (sin SII/AEAT)
-- Sin 2FA ni rate limiting
+- 2FA TOTP disponible, no obligatorio por defecto
+- Rate limiter in-memory (no distribuido multi-instancia)
 - Sin retry para Gemini/GPS
+- Rol SUPERADMIN no separado de JEFE (pendiente V8)
+- Stripe webhook endpoint preparado pero integracion real pendiente
 - Stock single-almacen por tenant
 - Devolucion posventa no revierte stock automaticamente
 - Service worker basico (manifest sin cache offline avanzado)

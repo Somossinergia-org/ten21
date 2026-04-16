@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { ActivityAction, ActivityEntity } from "@/services/activity.service";
 
 describe("ActivityAction type coverage", () => {
-  it("includes all V5 actions", () => {
+  it("includes all V7 actions", () => {
     const actions: ActivityAction[] = [
       "purchase.created", "purchase.sent",
       "reception.created", "reception.completed",
@@ -23,11 +23,15 @@ describe("ActivityAction type coverage", () => {
       "automation.created", "automation.toggled",
       "template.created",
       "outbound.sent", "outbound.failed", "outbound.retried", "outbound.cancelled",
+      "plan.changed", "subscription.cancelled", "subscription.reactivated",
+      "export.requested", "deletion.requested", "deletion.approved",
+      "mfa.enabled", "mfa.disabled",
+      "security.login_failed", "security.admin_access",
     ];
-    expect(actions.length).toBe(46);
+    expect(actions.length).toBe(56);
   });
 
-  it("includes all V5 entities", () => {
+  it("includes all V7 entities", () => {
     const entities: ActivityEntity[] = [
       "PurchaseOrder", "Reception", "Incident", "Delivery",
       "Product", "Supplier", "Vehicle",
@@ -36,7 +40,10 @@ describe("ActivityAction type coverage", () => {
       "DeliveryProof", "FileAsset",
       "AutomationRule", "NotificationTemplate", "OutboundMessage",
       "CustomerInvoice",
+      "SubscriptionPlan", "TenantSubscription", "BillingInvoice",
+      "DataExportRequest", "DataDeletionRequest",
+      "SecurityEvent", "UserMfa", "BackupJob",
     ];
-    expect(entities.length).toBe(20);
+    expect(entities.length).toBe(28);
   });
 });

@@ -46,7 +46,17 @@ export type ActivityAction =
   | "outbound.sent"
   | "outbound.failed"
   | "outbound.retried"
-  | "outbound.cancelled";
+  | "outbound.cancelled"
+  | "plan.changed"
+  | "subscription.cancelled"
+  | "subscription.reactivated"
+  | "export.requested"
+  | "deletion.requested"
+  | "deletion.approved"
+  | "mfa.enabled"
+  | "mfa.disabled"
+  | "security.login_failed"
+  | "security.admin_access";
 
 export type ActivityEntity =
   | "PurchaseOrder"
@@ -68,7 +78,15 @@ export type ActivityEntity =
   | "AutomationRule"
   | "NotificationTemplate"
   | "OutboundMessage"
-  | "CustomerInvoice";
+  | "CustomerInvoice"
+  | "SubscriptionPlan"
+  | "TenantSubscription"
+  | "BillingInvoice"
+  | "DataExportRequest"
+  | "DataDeletionRequest"
+  | "SecurityEvent"
+  | "UserMfa"
+  | "BackupJob";
 
 type LogInput = {
   tenantId: string;
