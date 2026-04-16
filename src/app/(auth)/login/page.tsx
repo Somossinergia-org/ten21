@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { LoginForm } from "./login-form";
+import { QuickAccess } from "./quick-access";
 
 export default async function LoginPage() {
   const session = await getSession();
@@ -9,7 +10,6 @@ export default async function LoginPage() {
     redirect("/dashboard");
   }
 
-  // Load tenants on the server so the form renders with data even without JS
   const tenants = await db.tenant.findMany({
     where: { active: true },
     select: { id: true, name: true, slug: true },
@@ -27,7 +27,27 @@ export default async function LoginPage() {
             Gestion de tienda
           </p>
         </div>
-        <LoginForm tenants={tenants} />
+
+        {/* Quick access buttons */}
+        {tenants.length === 1 && (
+          <QuickAccess tenantId={tenants[0].id} />
+        )}
+
+        {/* Divider */}
+        <div className="mt-6 relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-3 text-gray-400 uppercase tracking-wider font-medium">
+              O entra con tus datos
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <LoginForm tenants={tenants} />
+        </div>
       </div>
     </div>
   );
