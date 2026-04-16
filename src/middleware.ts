@@ -21,5 +21,7 @@ export const config = {
     "/sales/:path*",
     "/inventory/:path*",
     "/post-sales/:path*",
+    "/finance/:path*",
+    "/executive/:path*",
   ],
 };

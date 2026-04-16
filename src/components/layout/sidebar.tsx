@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
   AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain, Wallet,
-  UserCircle, Bell, Receipt, Warehouse, HeadsetIcon,
+  UserCircle, Bell, Receipt, Warehouse, HeadsetIcon, Gauge, TrendingUp, FileText,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -14,7 +14,10 @@ type NavItem = { label: string; href: string; roles: Role[]; icon: React.ReactNo
 type NavGroup = { title?: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
-  { items: [{ label: "Dashboard", href: "/dashboard", roles: ["JEFE"], icon: <LayoutDashboard size={16} /> }] },
+  { items: [
+    { label: "Dashboard", href: "/dashboard", roles: ["JEFE"], icon: <LayoutDashboard size={16} /> },
+    { label: "Cockpit", href: "/executive", roles: ["JEFE"], icon: <Gauge size={16} /> },
+  ]},
   { title: "Ventas", items: [
     { label: "Ventas", href: "/sales", roles: ["JEFE"], icon: <Receipt size={16} /> },
     { label: "Clientes", href: "/customers", roles: ["JEFE"], icon: <UserCircle size={16} /> },
@@ -37,7 +40,10 @@ const navGroups: NavGroup[] = [
   ]},
   { title: "Sistema", items: [
     { label: "Notificaciones", href: "/notifications", roles: ["JEFE", "ALMACEN", "REPARTO"], icon: <Bell size={16} /> },
-    { label: "Finanzas", href: "/settings/finance", roles: ["JEFE"], icon: <Wallet size={16} /> },
+    { label: "Tesoreria", href: "/finance/treasury", roles: ["JEFE"], icon: <Wallet size={16} /> },
+    { label: "Facturas cliente", href: "/finance/invoices", roles: ["JEFE"], icon: <FileText size={16} /> },
+    { label: "Rentabilidad", href: "/finance/profitability", roles: ["JEFE"], icon: <TrendingUp size={16} /> },
+    { label: "Fact. proveedor", href: "/settings/finance", roles: ["JEFE"], icon: <Wallet size={16} /> },
     { label: "Inteligencia IA", href: "/settings/ai", roles: ["JEFE"], icon: <Brain size={16} /> },
     { label: "Usuarios", href: "/settings/users", roles: ["JEFE"], icon: <Users size={16} /> },
     { label: "Estadisticas", href: "/settings/stats", roles: ["JEFE"], icon: <BarChart3 size={16} /> },

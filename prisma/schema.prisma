@@ -33,6 +33,8 @@ model Tenant {
   salesOrders    SalesOrder[]
   stockMovements StockMovement[]
   postSaleTickets PostSaleTicket[]
+  customerInvoices CustomerInvoice[]
+  treasuryEntries TreasuryEntry[]
 }
 
 // ============================================================
@@ -64,6 +66,7 @@ model User {
   salesOrders        SalesOrder[]
   createdTickets     PostSaleTicket[] @relation("ticketCreatedBy")
   assignedTickets    PostSaleTicket[] @relation("ticketAssignedTo")
+  customerInvoices   CustomerInvoice[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -423,6 +426,8 @@ model SupplierInvoice {
   invoiceDate          DateTime?
   dueDate              DateTime?
   status               InvoiceStatus         @default(PENDING)
+  paidDate             DateTime?
+  varianceAmount       Decimal?
   reconciliationStatus ReconciliationStatus  @default(NOT_CHECKED)
   mismatchReason       String?
   pdfDataUrl           String?               @db.Text
@@ -458,9 +463,10 @@ model Customer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  deliveries      Delivery[]
-  salesOrders     SalesOrder[]
-  postSaleTickets PostSaleTicket[]
+  deliveries       Delivery[]
+  salesOrders      SalesOrder[]
+  postSaleTickets  PostSaleTicket[]
+  customerInvoices CustomerInvoice[]
 
   @@index([tenantId])
   @@index([tenantId, fullName])
@@ -545,6 +551,8 @@ model SalesOrder {
   discountTotal         Decimal          @default(0)
   total                 Decimal          @default(0)
   estimatedMargin       Decimal?
+  realMargin            Decimal?
+  paymentStatus         String?          @default("UNBILLED") // UNBILLED, BILLED, PARTIALLY_PAID, PAID
   createdById           String
   createdBy             User             @relation(fields: [createdById], references: [id])
   confirmedAt           DateTime?
@@ -554,9 +562,10 @@ model SalesOrder {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  lines           SalesOrderLine[]
-  deliveries      Delivery[]
-  postSaleTickets PostSaleTicket[]
+  lines            SalesOrderLine[]
+  deliveries       Delivery[]
+  postSaleTickets  PostSaleTicket[]
+  customerInvoices CustomerInvoice[]
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
@@ -681,4 +690,105 @@ model PostSaleTicket {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([customerId])
+}
+
+// ============================================================
+// FACTURACION CLIENTE (V4)
+// ============================================================
+enum CustomerInvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+model CustomerInvoice {
+  id             String                @id @default(cuid())
+  invoiceNumber  String
+  customerId     String
+  customer       Customer              @relation(fields: [customerId], references: [id])
+  salesOrderId   String?
+  salesOrder     SalesOrder?           @relation(fields: [salesOrderId], references: [id])
+  status         CustomerInvoiceStatus @default(DRAFT)
+  issueDate      DateTime?
+  dueDate        DateTime?
+  subtotal       Decimal               @default(0)
+  taxAmount      Decimal               @default(0)
+  total          Decimal               @default(0)
+  paidAmount     Decimal               @default(0)
+  paidAt         DateTime?
+  notes          String?
+  createdById    String
+  createdBy      User                  @relation(fields: [createdById], references: [id])
+  tenantId       String
+  tenant         Tenant                @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  lines CustomerInvoiceLine[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+model CustomerInvoiceLine {
+  id                String          @id @default(cuid())
+  customerInvoiceId String
+  customerInvoice   CustomerInvoice @relation(fields: [customerInvoiceId], references: [id], onDelete: Cascade)
+  salesOrderLineId  String?
+  description       String
+  quantity          Int
+  unitPrice         Decimal
+  taxRate           Decimal         @default(21)
+  lineSubtotal      Decimal
+  lineTax           Decimal
+  lineTotal         Decimal
+  tenantId          String
+
+  @@index([customerInvoiceId])
+}
+
+// ============================================================
+// TESORERIA (V4)
+// ============================================================
+enum TreasuryType {
+  INCOME_EXPECTED
+  INCOME_CONFIRMED
+  EXPENSE_EXPECTED
+  EXPENSE_CONFIRMED
+}
+
+enum TreasuryStatus {
+  PENDING
+  UPCOMING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model TreasuryEntry {
+  id          String         @id @default(cuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  type        TreasuryType
+  sourceType  String?        // SUPPLIER_INVOICE, CUSTOMER_INVOICE, MANUAL
+  sourceId    String?
+  category    String?
+  concept     String
+  amount      Decimal
+  dueDate     DateTime?
+  paidDate    DateTime?
+  status      TreasuryStatus @default(PENDING)
+  notes       String?
+  createdById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([sourceType, sourceId])
 }
