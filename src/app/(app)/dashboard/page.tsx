@@ -82,25 +82,17 @@ export default async function DashboardPage() {
       {/* BLOCK 0: GLOBAL STATUS */}
       {/* ============================================================ */}
       {totalAlerts > 0 ? (
-        <div className="rounded-2xl bg-red-700 px-8 py-8 text-center shadow-xl">
-          <p className="text-lg font-bold uppercase tracking-wider text-red-200">
-            Tienes
-          </p>
-          <p className="text-6xl font-black text-white mt-1">
-            {totalAlerts}
-          </p>
-          <p className="mt-1 text-xl font-black uppercase tracking-wide text-white">
+        <div className="rounded-2xl bg-red-500/10 border border-red-500/30 px-8 py-8 text-center glow-red">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-400/70">Tienes</p>
+          <p className="text-7xl font-black text-red-400 mt-1">{totalAlerts}</p>
+          <p className="mt-1 text-lg font-black uppercase tracking-wider text-red-300">
             problema{totalAlerts !== 1 ? "s" : ""} importante{totalAlerts !== 1 ? "s" : ""}
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl bg-green-600 px-8 py-6 text-center shadow-lg">
-          <p className="text-3xl font-black text-white">
-            Todo bajo control
-          </p>
-          <p className="mt-1 text-sm font-medium text-green-100">
-            No hay problemas activos
-          </p>
+        <div className="rounded-2xl bg-green-500/10 border border-green-500/30 px-8 py-6 text-center glow-green">
+          <p className="text-3xl font-black text-green-400">Todo bajo control</p>
+          <p className="mt-1 text-sm font-medium text-green-500/60">No hay problemas activos</p>
         </div>
       )}
 

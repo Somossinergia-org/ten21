@@ -38,7 +38,7 @@ export default async function AppLayout({
           tenantName={tenant?.name ?? ""}
           openIncidents={openIncidents}
         />
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-[#050a14] p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>
