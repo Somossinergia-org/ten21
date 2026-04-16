@@ -26,7 +26,19 @@ export type ActivityAction =
   | "customer.updated"
   | "invoice.created"
   | "invoice.reconciled"
-  | "notification.created";
+  | "notification.created"
+  | "sale.created"
+  | "sale.confirmed"
+  | "sale.cancelled"
+  | "sale.delivered"
+  | "stock.reception_in"
+  | "stock.sale_reserve"
+  | "stock.sale_release"
+  | "stock.delivery_out"
+  | "stock.manual_adjustment"
+  | "postsale.created"
+  | "postsale.updated"
+  | "postsale.closed";
 
 export type ActivityEntity =
   | "PurchaseOrder"
@@ -39,7 +51,10 @@ export type ActivityEntity =
   | "User"
   | "Customer"
   | "SupplierInvoice"
-  | "Notification";
+  | "Notification"
+  | "SalesOrder"
+  | "ProductInventory"
+  | "PostSaleTicket";
 
 type LogInput = {
   tenantId: string;

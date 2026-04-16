@@ -18,5 +18,8 @@ export const config = {
     "/settings/:path*",
     "/customers/:path*",
     "/notifications/:path*",
+    "/sales/:path*",
+    "/inventory/:path*",
+    "/post-sales/:path*",
   ],
 };

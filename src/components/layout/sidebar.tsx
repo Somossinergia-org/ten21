@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, ShoppingCart, Package, Truck, ClipboardList,
   AlertTriangle, MapPin, Calendar, Users, BarChart3, Menu, X, Brain, Wallet,
-  UserCircle, Bell,
+  UserCircle, Bell, Receipt, Warehouse, HeadsetIcon,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -15,13 +15,18 @@ type NavGroup = { title?: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   { items: [{ label: "Dashboard", href: "/dashboard", roles: ["JEFE"], icon: <LayoutDashboard size={16} /> }] },
-  { title: "Comercial", items: [
+  { title: "Ventas", items: [
+    { label: "Ventas", href: "/sales", roles: ["JEFE"], icon: <Receipt size={16} /> },
     { label: "Clientes", href: "/customers", roles: ["JEFE"], icon: <UserCircle size={16} /> },
+    { label: "Posventa", href: "/post-sales", roles: ["JEFE"], icon: <HeadsetIcon size={16} /> },
+  ]},
+  { title: "Compras", items: [
     { label: "Pedidos", href: "/purchases", roles: ["JEFE"], icon: <ShoppingCart size={16} /> },
     { label: "Productos", href: "/purchases/products", roles: ["JEFE"], icon: <Package size={16} /> },
     { label: "Proveedores", href: "/purchases/suppliers", roles: ["JEFE"], icon: <ClipboardList size={16} /> },
   ]},
   { title: "Almacen", items: [
+    { label: "Inventario", href: "/inventory", roles: ["JEFE", "ALMACEN"], icon: <Warehouse size={16} /> },
     { label: "Recepcion", href: "/reception", roles: ["JEFE", "ALMACEN"], icon: <Package size={16} /> },
     { label: "Incidencias", href: "/incidents", roles: ["JEFE", "ALMACEN"], icon: <AlertTriangle size={16} /> },
   ]},
