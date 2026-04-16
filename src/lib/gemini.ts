@@ -33,7 +33,7 @@ REGLAS:
 
 export async function chat(userMessage: string, context: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent({
       contents: [
@@ -57,7 +57,7 @@ export async function chat(userMessage: string, context: string): Promise<string
 
 export async function generateBriefing(context: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent({
       contents: [
@@ -81,7 +81,7 @@ export async function generateBriefing(context: string): Promise<string> {
 
 export async function detectAnomalies(context: string): Promise<string[]> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent({
       contents: [
