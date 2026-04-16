@@ -6,6 +6,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Ten21 - Gestion de Tienda",
   description: "Sistema de gestion para tiendas de muebles y electrodomesticos",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  themeColor: "#ffffff",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ten21",
+  },
 };
 
 export default function RootLayout({

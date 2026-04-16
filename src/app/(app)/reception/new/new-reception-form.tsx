@@ -148,71 +148,61 @@ export function NewReceptionForm({ orders }: { orders: Order[] }) {
             Introduce las cantidades realmente recibidas y dañadas para cada producto.
           </p>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="text-xs font-medium uppercase text-gray-500">
-                  <th className="pb-2 pr-3 text-left">Producto</th>
-                  <th className="pb-2 px-3 text-right w-24">Esperado</th>
-                  <th className="pb-2 px-3 text-right w-28">Recibido *</th>
-                  <th className="pb-2 px-3 text-right w-28">Dañado</th>
-                  <th className="pb-2 pl-3 text-left">Notas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {lines.map((line, idx) => {
-                  const mismatch = line.quantityReceived !== line.quantityExpected;
-                  const damaged = line.quantityDamaged > 0;
-                  const rowColor = mismatch || damaged ? "bg-red-50" : "";
+          <div className="space-y-3">
+            {lines.map((line, idx) => {
+              const mismatch = line.quantityReceived !== line.quantityExpected;
+              const damaged = line.quantityDamaged > 0;
+              const hasIssue = mismatch || damaged;
 
-                  return (
-                    <tr key={line.purchaseOrderLineId} className={rowColor}>
-                      <td className="py-2 pr-3">
-                        <span className="text-sm font-mono text-gray-700">{line.productRef}</span>
-                        <span className="ml-2 text-sm text-gray-500">{line.productName}</span>
-                      </td>
-                      <td className="py-2 px-3 text-right text-sm text-gray-500">
-                        {line.quantityExpected}
-                      </td>
-                      <td className="py-2 px-3">
-                        <input
-                          type="number"
-                          min="0"
-                          value={line.quantityReceived}
-                          onChange={(e) =>
-                            updateLine(idx, "quantityReceived", parseInt(e.target.value) || 0)
-                          }
-                          className={`w-full rounded-md border px-2 py-1.5 text-sm text-right ${
-                            mismatch ? "border-red-300 bg-red-50" : "border-gray-300"
-                          }`}
-                        />
-                      </td>
-                      <td className="py-2 px-3">
-                        <input
-                          type="number"
-                          min="0"
-                          value={line.quantityDamaged}
-                          onChange={(e) =>
-                            updateLine(idx, "quantityDamaged", parseInt(e.target.value) || 0)
-                          }
-                          className={`w-full rounded-md border px-2 py-1.5 text-sm text-right ${
-                            damaged ? "border-orange-300 bg-orange-50" : "border-gray-300"
-                          }`}
-                        />
-                      </td>
-                      <td className="py-2 pl-3">
-                        <input
-                          value={line.notes}
-                          onChange={(e) => updateLine(idx, "notes", e.target.value)}
-                          placeholder="—"
-                          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div key={line.purchaseOrderLineId} className={`rounded-xl border-2 p-4 ${hasIssue ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+                  {/* Product header */}
+                  <div className="mb-3">
+                    <span className="text-sm font-mono font-bold text-gray-900">{line.productRef}</span>
+                    <span className="ml-2 text-sm text-gray-500">{line.productName}</span>
+                    <span className="ml-2 text-xs text-gray-400">Esperado: {line.quantityExpected}</span>
+                  </div>
+                  {/* Inputs row */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Recibido *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={line.quantityReceived}
+                        onChange={(e) => updateLine(idx, "quantityReceived", parseInt(e.target.value) || 0)}
+                        className={`w-full rounded-md border px-3 py-2.5 text-base text-center font-bold ${
+                          mismatch ? "border-red-300 bg-red-50 text-red-700" : "border-gray-300 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Dañado</label>
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={line.quantityDamaged}
+                        onChange={(e) => updateLine(idx, "quantityDamaged", parseInt(e.target.value) || 0)}
+                        className={`w-full rounded-md border px-3 py-2.5 text-base text-center font-bold ${
+                          damaged ? "border-orange-300 bg-orange-50 text-orange-700" : "border-gray-300 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Notas</label>
+                      <input
+                        value={line.notes}
+                        onChange={(e) => updateLine(idx, "notes", e.target.value)}
+                        placeholder="—"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Preview of detected issues */}
