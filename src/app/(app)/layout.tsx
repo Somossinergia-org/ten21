@@ -15,10 +15,18 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const tenant = await db.tenant.findUnique({
-    where: { id: session.user.tenantId },
-    select: { name: true },
-  });
+  const [tenant, openIncidents] = await Promise.all([
+    db.tenant.findUnique({
+      where: { id: session.user.tenantId },
+      select: { name: true },
+    }),
+    db.incident.count({
+      where: {
+        tenantId: session.user.tenantId,
+        status: { in: ["REGISTERED", "NOTIFIED"] },
+      },
+    }),
+  ]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -28,6 +36,7 @@ export default async function AppLayout({
           userName={session.user.name}
           userRole={session.user.role}
           tenantName={tenant?.name ?? ""}
+          openIncidents={openIncidents}
         />
         <main className="flex-1 overflow-y-auto bg-gray-50 p-3 sm:p-6">
           {children}

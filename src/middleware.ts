@@ -15,5 +15,6 @@ export const config = {
     "/reception/:path*",
     "/incidents/:path*",
     "/vehicles/:path*",
+    "/settings/:path*",
   ],
 };

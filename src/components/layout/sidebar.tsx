@@ -45,6 +45,13 @@ const navGroups: NavGroup[] = [
       { label: "Agenda", href: "/vehicles/deliveries/calendar", roles: ["JEFE", "REPARTO"] },
     ],
   },
+  {
+    title: "Configuracion",
+    items: [
+      { label: "Usuarios", href: "/settings/users", roles: ["JEFE"] },
+      { label: "Estadisticas", href: "/settings/stats", roles: ["JEFE"] },
+    ],
+  },
 ];
 
 function getVisibleGroups(role: Role): NavGroup[] {
