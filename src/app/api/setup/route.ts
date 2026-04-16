@@ -23,8 +23,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "already_seeded", tenant: existing.name });
     }
 
-    // If force, delete everything
+    // If force, delete everything (order respects FK constraints)
     if (force && existing) {
+      // V7 tables
+      await prisma.backupJob.deleteMany();
+      await prisma.securityEvent.deleteMany();
+      await prisma.userMfa.deleteMany();
+      await prisma.dataDeletionRequest.deleteMany();
+      await prisma.dataExportRequest.deleteMany();
+      await prisma.billingEvent.deleteMany();
+      await prisma.usageMetric.deleteMany();
+      await prisma.billingInvoice.deleteMany();
+      await prisma.tenantSubscription.deleteMany();
+      await prisma.subscriptionPlan.deleteMany();
+      // V6 tables
+      await prisma.systemHealthEvent.deleteMany();
+      await prisma.supportCase.deleteMany();
+      await prisma.featureFlag.deleteMany();
+      await prisma.tenantOnboarding.deleteMany();
+      await prisma.importJob.deleteMany();
+      await prisma.tenantTemplate.deleteMany();
+      await prisma.tenantModule.deleteMany();
+      await prisma.tenantBranding.deleteMany();
+      await prisma.tenantConfig.deleteMany();
+      // V5 tables
+      await prisma.outboundMessage.deleteMany();
+      await prisma.automationRule.deleteMany();
+      await prisma.notificationTemplate.deleteMany();
+      await prisma.deviceSubscription.deleteMany();
+      await prisma.deliveryProof.deleteMany();
+      await prisma.fileAsset.deleteMany();
+      // V4 tables
+      await prisma.treasuryEntry.deleteMany();
+      await prisma.customerInvoiceLine.deleteMany();
+      await prisma.customerInvoice.deleteMany();
+      // V3 tables
+      await prisma.stockMovement.deleteMany();
+      await prisma.productInventory.deleteMany();
+      await prisma.postSaleTicket.deleteMany();
+      await prisma.salesOrderLine.deleteMany();
+      await prisma.salesOrder.deleteMany();
+      // V2 tables
+      await prisma.notification.deleteMany();
+      await prisma.deliveryLine.deleteMany();
+      // V1 tables
       await prisma.activityLog.deleteMany();
       await prisma.attachment.deleteMany();
       await prisma.supplierInvoice.deleteMany();
@@ -37,6 +79,7 @@ export async function POST(request: Request) {
       await prisma.purchaseOrder.deleteMany();
       await prisma.product.deleteMany();
       await prisma.supplier.deleteMany();
+      await prisma.customer.deleteMany();
       await prisma.user.deleteMany();
       await prisma.tenant.deleteMany();
     }
