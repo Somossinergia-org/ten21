@@ -3,6 +3,7 @@ import { requireRole, getTenantId } from "@/lib/tenant";
 import * as dashboardService from "@/services/dashboard.service";
 import * as sparklineService from "@/services/sparkline.service";
 import { DashboardSparklines } from "./dashboard-sparklines";
+import { VoiceBriefing } from "@/components/dashboard/voice-briefing";
 
 // ============================================================
 // STATUS CONFIGS
@@ -68,7 +69,15 @@ export default async function DashboardPage() {
     alerts.incompleteOrders.length;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-fade-in">
+      {/* Voice briefing + status */}
+      <div className="flex items-center justify-between gap-4">
+        <VoiceBriefing data={{ openIncidents: kpis.openIncidents, pendingOrders: kpis.pendingOrders, todayReceptionsOk: kpis.todayReceptionsOk, vehiclesInUse: kpis.vehiclesInUse, activeDeliveries: kpis.activeDeliveries, alertCount: totalAlerts }} />
+        <p className="text-xs text-gray-400 hidden sm:block">
+          {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        </p>
+      </div>
+
       {/* ============================================================ */}
       {/* BLOCK 0: GLOBAL STATUS */}
       {/* ============================================================ */}

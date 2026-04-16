@@ -1,4 +1,4 @@
-import { requireRole, getCurrentUser } from "@/lib/tenant";
+import { requireRole } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { DeliveryCalendar } from "./delivery-calendar";
 
@@ -6,18 +6,29 @@ export default async function CalendarPage() {
   const session = await requireRole(["JEFE", "REPARTO"]);
   const user = session.user;
   const filterUserId = user.role === "REPARTO" ? user.id : undefined;
+  const isJefe = user.role === "JEFE";
 
-  const deliveries = await db.delivery.findMany({
-    where: {
-      tenantId: user.tenantId,
-      ...(filterUserId ? { assignedToId: filterUserId } : {}),
-    },
-    include: {
-      vehicle: { select: { name: true, plate: true } },
-      assignedTo: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [deliveries, receptions, orders] = await Promise.all([
+    db.delivery.findMany({
+      where: { tenantId: user.tenantId, ...(filterUserId ? { assignedToId: filterUserId } : {}) },
+      include: {
+        vehicle: { select: { name: true, plate: true } },
+        assignedTo: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    isJefe ? db.reception.findMany({
+      where: { tenantId: user.tenantId },
+      include: { purchaseOrder: { select: { orderNumber: true, supplier: { select: { name: true } } } } },
+      orderBy: { receivedAt: "desc" },
+      take: 30,
+    }) : Promise.resolve([]),
+    isJefe ? db.purchaseOrder.findMany({
+      where: { tenantId: user.tenantId, status: { in: ["SENT", "PARTIAL"] } },
+      include: { supplier: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    }) : Promise.resolve([]),
+  ]);
 
   const events = deliveries.map((d) => {
     const dateStr = d.scheduledDate
@@ -56,6 +67,48 @@ export default async function CalendarPage() {
     };
   });
 
+  // Reception events (purple)
+  const receptionEvents = receptions.map((r) => ({
+    id: `rec-${r.id}`,
+    title: `📦 ${r.receptionNumber} — ${r.purchaseOrder.supplier.name}`,
+    date: new Date(r.receivedAt).toISOString().split("T")[0],
+    color: r.status === "WITH_INCIDENTS" ? "#dc2626" : "#8b5cf6",
+    url: `/reception/${r.id}`,
+    extendedProps: {
+      deliveryNumber: r.receptionNumber,
+      customerName: r.purchaseOrder.supplier.name,
+      customerPhone: null,
+      customerAddress: "",
+      description: `Pedido ${r.purchaseOrder.orderNumber}`,
+      status: r.status,
+      statusLabel: r.status === "WITH_INCIDENTS" ? "Con incidencias" : "Completada",
+      vehicleName: "", vehiclePlate: "", assignedTo: "",
+      startKm: null, endKm: null,
+    },
+  }));
+
+  // Pending order events (cyan)
+  const orderEvents = orders.map((o) => ({
+    id: `po-${o.id}`,
+    title: `📋 ${o.orderNumber} — ${o.supplier.name}`,
+    date: new Date(o.createdAt).toISOString().split("T")[0],
+    color: "#0891b2",
+    url: `/purchases/${o.id}`,
+    extendedProps: {
+      deliveryNumber: o.orderNumber,
+      customerName: o.supplier.name,
+      customerPhone: null,
+      customerAddress: "",
+      description: `Pedido ${o.status === "PARTIAL" ? "parcial" : "pendiente"}`,
+      status: o.status,
+      statusLabel: o.status === "PARTIAL" ? "Parcial" : "Enviado",
+      vehicleName: "", vehiclePlate: "", assignedTo: "",
+      startKm: null, endKm: null,
+    },
+  }));
+
+  const allEvents = [...events, ...receptionEvents, ...orderEvents];
+
   // Summary stats
   const stats = {
     total: deliveries.length,
@@ -90,7 +143,7 @@ export default async function CalendarPage() {
 
       {/* Calendar */}
       <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
-        <DeliveryCalendar events={events} />
+        <DeliveryCalendar events={allEvents} />
       </div>
 
       {/* Legend */}
@@ -101,6 +154,8 @@ export default async function CalendarPage() {
           { color: "bg-green-500", label: "Entregada" },
           { color: "bg-red-500", label: "Fallida" },
           { color: "bg-gray-400", label: "Pendiente" },
+          { color: "bg-violet-500", label: "Recepcion" },
+          { color: "bg-cyan-600", label: "Pedido pend." },
         ].map((l) => (
           <div key={l.label} className="flex items-center gap-1.5">
             <div className={`h-3 w-3 rounded-full ${l.color}`} />

@@ -12,23 +12,75 @@
   --font-mono: "Fira Code", "Cascadia Code", Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
 }
 
+/* Animations */
 @keyframes slide-in {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
 
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.4s ease-out; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* FullCalendar overrides */
+.fc .fc-button {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  text-transform: capitalize !important;
+}
+.fc .fc-button-primary {
+  background-color: #1e40af !important;
+  border-color: #1e40af !important;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: #1e3a8a !important;
+}
+.fc .fc-toolbar-title {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  text-transform: capitalize !important;
+}
+.fc .fc-daygrid-event {
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border: none !important;
+}
+.fc .fc-daygrid-day-number {
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+.fc .fc-col-header-cell-cushion {
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+}
+.fc .fc-day-today {
+  background-color: #eff6ff !important;
+}
+.fc .fc-list-event {
+  cursor: pointer;
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { GlobalSearch } from "./global-search";
 import type { Role } from "@prisma/client";
 
 const roleLabels: Record<Role, string> = {
@@ -26,6 +27,9 @@ export function Header({ userName, userRole, tenantName, openIncidents = 0 }: He
       <div className="sm:hidden" />
 
       <div className="flex items-center gap-3">
+        {/* Global search */}
+        <GlobalSearch />
+
         {/* Notification badge */}
         {openIncidents > 0 && (
           <Link
