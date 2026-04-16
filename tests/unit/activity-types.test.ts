@@ -2,8 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { ActivityAction, ActivityEntity } from "@/services/activity.service";
 
 describe("ActivityAction type coverage", () => {
-  it("includes all V2 actions", () => {
-    // Type-level test: these assignments should compile without error
+  it("includes all V3 actions", () => {
     const actions: ActivityAction[] = [
       "purchase.created", "purchase.sent",
       "reception.created", "reception.completed",
@@ -16,16 +15,21 @@ describe("ActivityAction type coverage", () => {
       "customer.created", "customer.updated",
       "invoice.created", "invoice.reconciled",
       "notification.created",
+      "sale.created", "sale.confirmed", "sale.cancelled", "sale.delivered",
+      "stock.reception_in", "stock.sale_reserve", "stock.sale_release",
+      "stock.delivery_out", "stock.manual_adjustment",
+      "postsale.created", "postsale.updated", "postsale.closed",
     ];
-    expect(actions.length).toBe(26);
+    expect(actions.length).toBe(38);
   });
 
-  it("includes all V2 entities", () => {
+  it("includes all V3 entities", () => {
     const entities: ActivityEntity[] = [
       "PurchaseOrder", "Reception", "Incident", "Delivery",
       "Product", "Supplier", "Vehicle",
       "User", "Customer", "SupplierInvoice", "Notification",
+      "SalesOrder", "ProductInventory", "PostSaleTicket",
     ];
-    expect(entities.length).toBe(11);
+    expect(entities.length).toBe(14);
   });
 });
