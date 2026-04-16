@@ -128,8 +128,36 @@ SalesOrder (DRAFT->CONFIRMED->RESERVED->IN_DELIVERY->DELIVERED)
 - Vinculable a cliente, venta y/o entrega
 - Notificacion automatica para tickets HIGH/URGENT
 
+### Facturacion a Cliente (V4)
+```
+CustomerInvoice (DRAFT->ISSUED->PARTIALLY_PAID->PAID)
+```
+- Crear desde SalesOrder o manual, FACC-001 numbering
+- Lineas con IVA por defecto 21%
+- Emision genera entrada de tesoreria (ingreso esperado)
+- Registro de cobros parciales y totales
+
+### Tesoreria (V4)
+- Entradas unificadas de ingresos y gastos (esperados/confirmados)
+- Auto-generacion desde facturas proveedor y cliente
+- Forecast a 7/30/60 dias
+- Vencimientos, cobros y pagos con tracking
+- Entradas manuales del JEFE
+
+### Rentabilidad (V4)
+- Margen estimado vs margen real por venta
+- Alertas: margen negativo, margen <5%, coste incompleto
+- Vista agregada con % de margen
+
+### Cockpit Ejecutivo (V4)
+- Caja prevista 7/30/60 dias
+- Ventas sin facturar, facturas vencidas
+- Pagos y cobros vencidos
+- Stock bajo, entregas activas, tickets posventa
+- Alertas de margen accionables
+
 ### Clientes
-- Entidad centralizada con historial de entregas y ventas
+- Entidad centralizada con historial de entregas, ventas y facturas
 - Vista 360: datos, direccion, entregas, ventas, tickets posventa
 
 ### Notificaciones
@@ -163,23 +191,23 @@ src/
   components/           # UI (layout, agent, attachments, timeline, dashboard)
   lib/                  # Auth, DB, tenant helpers, validaciones Zod
 prisma/
-  schema.prisma         # 24 modelos, 18 enums
+  schema.prisma         # 27 modelos, 23 enums
   seed.ts               # Datos demo TodoMueble Guardamar
   backfill-customers.ts # Migracion Delivery->Customer
-  migrations/           # 8 migraciones
+  migrations/           # 9 migraciones
 tests/
-  unit/                 # 98 tests (validaciones, estados, tipos)
+  unit/                 # 113 tests (validaciones, estados, financieros)
 docs/
-  plan_arquitectura.md, plan_arquitectura_v3.md
-  reglas-dominio.md, reglas-dominio-v3.md
-  roadmap-v2.md, roadmap-v3.md
+  plan_arquitectura.md, plan_arquitectura_v3.md, plan_arquitectura_v4.md
+  reglas-dominio.md, reglas-dominio-v3.md, reglas-dominio-v4.md
+  roadmap-v2.md, roadmap-v3.md, roadmap-v4.md
 ```
 
 ## Limitaciones actuales
 
 - Adjuntos almacenados en base64 en BD (max 2MB)
 - Sin notificaciones externas (email/push)
-- Sin facturacion fiscal a cliente (solo SalesOrder)
+- Facturacion interna, no contabilidad fiscal oficial (sin SII/AEAT)
 - Sin 2FA ni rate limiting
 - Sin retry para llamadas a Gemini
 - Stock es single-almacen por tenant (sin multi-sede)
