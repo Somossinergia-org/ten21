@@ -15,10 +15,14 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const [tenant, openIncidents, unreadNotifications] = await Promise.all([
+  const [tenant, branding, openIncidents, unreadNotifications] = await Promise.all([
     db.tenant.findUnique({
       where: { id: session.user.tenantId },
       select: { name: true },
+    }),
+    db.tenantBranding.findUnique({
+      where: { tenantId: session.user.tenantId },
+      select: { appName: true },
     }),
     db.incident.count({
       where: {
@@ -35,9 +39,12 @@ export default async function AppLayout({
     }),
   ]);
 
+  const displayName = branding?.appName || tenant?.name || "TodoMueble";
+  const initials = displayName.substring(0, 2).toUpperCase();
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar role={session.user.role} isSuperAdmin={session.user.isSuperAdmin} />
+      <Sidebar role={session.user.role} isSuperAdmin={session.user.isSuperAdmin} appName={displayName} appInitials={initials} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           userName={session.user.name}

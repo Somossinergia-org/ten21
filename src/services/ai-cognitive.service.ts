@@ -118,48 +118,81 @@ export async function buildContextPack(tenantId: string, agentCode: string) {
 
   let summary: Record<string, unknown> = { tenantId, agentCode, generatedAt: now.toISOString() };
 
-  if (agentCode === "sales") {
-    const [total, pending, cancelled] = await Promise.all([
-      db.salesOrder.count({ where: { tenantId } }),
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const in7 = new Date(now.getTime() + 7 * 86400000);
+
+  if (agentCode === "executive") {
+    // V8: cross-domain summary for executive agent
+    const [ventas, entregasActivas, entregasFallidas, ticketsUrgentes, pagosVencidos, cobrosVencidos, lowStock] = await Promise.all([
       db.salesOrder.count({ where: { tenantId, status: { in: ["CONFIRMED", "RESERVED", "PARTIALLY_RESERVED"] } } }),
-      db.salesOrder.count({ where: { tenantId, status: "CANCELLED" } }),
+      db.delivery.count({ where: { tenantId, status: { in: ["ASSIGNED", "IN_TRANSIT"] } } }),
+      db.delivery.count({ where: { tenantId, status: "FAILED", deliveredAt: { gte: today } } }),
+      db.postSaleTicket.count({ where: { tenantId, priority: { in: ["HIGH", "URGENT"] }, status: { not: "CLOSED" } } }),
+      db.treasuryEntry.count({ where: { tenantId, type: { in: ["EXPENSE_EXPECTED"] }, dueDate: { lt: now }, status: { not: "PAID" } } }),
+      db.treasuryEntry.count({ where: { tenantId, type: { in: ["INCOME_EXPECTED"] }, dueDate: { lt: now }, status: { not: "PAID" } } }),
+      db.productInventory.count({ where: { tenantId, available: { lte: 0 } } }),
     ]);
-    summary = { ...summary, totalVentas: total, pendientesServir: pending, canceladas: cancelled };
-  } else if (agentCode === "purchases") {
-    const [total, partial, sent] = await Promise.all([
+    summary = { ...summary, ventasPendientesServir: ventas, entregasActivas, entregasFallidasHoy: entregasFallidas, ticketsUrgentes, pagosVencidos, cobrosVencidos, productosSinStock: lowStock };
+  } else if (agentCode === "sales") {
+    const [total, draft, pending, delivered, margenNegativo] = await Promise.all([
+      db.salesOrder.count({ where: { tenantId } }),
+      db.salesOrder.count({ where: { tenantId, status: "DRAFT" } }),
+      db.salesOrder.count({ where: { tenantId, status: { in: ["CONFIRMED", "RESERVED", "PARTIALLY_RESERVED"] } } }),
+      db.salesOrder.count({ where: { tenantId, status: "DELIVERED", deliveredAt: { gte: today } } }),
+      db.salesOrder.count({ where: { tenantId, estimatedMargin: { lt: 0 } } }),
+    ]);
+    summary = { ...summary, totalVentas: total, borradores: draft, pendientesServir: pending, entregadasHoy: delivered, margenNegativo };
+  } else if (agentCode === "purchase") {
+    const [total, partial, sent, overdueDelivery] = await Promise.all([
       db.purchaseOrder.count({ where: { tenantId } }),
       db.purchaseOrder.count({ where: { tenantId, status: "PARTIAL" } }),
       db.purchaseOrder.count({ where: { tenantId, status: "SENT" } }),
+      db.purchaseOrder.count({
+        where: { tenantId, status: "SENT", createdAt: { lt: new Date(now.getTime() - 14 * 86400000) } },
+      }),
     ]);
-    summary = { ...summary, totalPedidos: total, pedidosParciales: partial, pedidosEnviados: sent };
+    summary = { ...summary, totalPedidos: total, pedidosParciales: partial, pedidosEnviados: sent, retrasadosMas14d: overdueDelivery };
   } else if (agentCode === "warehouse") {
-    const [receptions, incidents] = await Promise.all([
+    const [pendingRec, incidents, damaged, lowStock] = await Promise.all([
       db.reception.count({ where: { tenantId, status: { in: ["PENDING", "CHECKING"] } } }),
       db.incident.count({ where: { tenantId, status: { in: ["REGISTERED", "NOTIFIED"] } } }),
+      db.incident.count({ where: { tenantId, type: "DAMAGED", status: { not: "CLOSED" } } }),
+      db.productInventory.count({ where: { tenantId, available: { lte: 0 } } }),
     ]);
-    summary = { ...summary, recepcionesPendientes: receptions, incidenciasAbiertas: incidents };
-  } else if (agentCode === "inventory") {
-    const lowStock = await db.productInventory.count({ where: { tenantId, available: { lte: 0 } } });
-    summary = { ...summary, productosSinStock: lowStock };
-  } else if (agentCode === "deliveries") {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const [active, failed] = await Promise.all([
+    summary = { ...summary, recepcionesPendientes: pendingRec, incidenciasAbiertas: incidents, productosDañados: damaged, productosSinStock: lowStock };
+  } else if (agentCode === "delivery") {
+    const [active, inTransit, failedToday, scheduledToday, proofsMissing] = await Promise.all([
       db.delivery.count({ where: { tenantId, status: { in: ["ASSIGNED", "IN_TRANSIT"] } } }),
+      db.delivery.count({ where: { tenantId, status: "IN_TRANSIT" } }),
       db.delivery.count({ where: { tenantId, status: "FAILED", deliveredAt: { gte: today } } }),
+      db.delivery.count({ where: { tenantId, scheduledDate: { gte: today, lt: in7 } } }),
+      db.delivery.count({ where: { tenantId, status: "DELIVERED", proofRequired: true, proofs: { none: {} } } }),
     ]);
-    summary = { ...summary, entregasActivas: active, fallidasHoy: failed };
+    summary = { ...summary, entregasActivas: active, enTransito: inTransit, fallidasHoy: failedToday, programadas7d: scheduledToday, sinPruebaRequerida: proofsMissing };
   } else if (agentCode === "treasury") {
-    const [overdue, upcoming] = await Promise.all([
-      db.treasuryEntry.count({ where: { tenantId, status: "OVERDUE" } }),
-      db.treasuryEntry.count({ where: { tenantId, status: "UPCOMING", dueDate: { lte: new Date(now.getTime() + 7 * 86400000) } } }),
+    const [overdueExpense, overdueIncome, upcoming7, paidLast30] = await Promise.all([
+      db.treasuryEntry.count({ where: { tenantId, type: { in: ["EXPENSE_EXPECTED"] }, dueDate: { lt: now }, status: { not: "PAID" } } }),
+      db.treasuryEntry.count({ where: { tenantId, type: { in: ["INCOME_EXPECTED"] }, dueDate: { lt: now }, status: { not: "PAID" } } }),
+      db.treasuryEntry.count({ where: { tenantId, status: "UPCOMING", dueDate: { lte: in7 } } }),
+      db.treasuryEntry.count({ where: { tenantId, status: "PAID", paidDate: { gte: new Date(now.getTime() - 30 * 86400000) } } }),
     ]);
-    summary = { ...summary, vencidos: overdue, proximos7d: upcoming };
-  } else if (agentCode === "postsales") {
-    const [open, urgent] = await Promise.all([
-      db.postSaleTicket.count({ where: { tenantId, status: { in: ["OPEN", "IN_PROGRESS"] } } }),
-      db.postSaleTicket.count({ where: { tenantId, priority: { in: ["HIGH", "URGENT"] }, status: { not: "CLOSED" } } }),
+    summary = { ...summary, pagosVencidos: overdueExpense, cobrosVencidos: overdueIncome, proximos7d: upcoming7, pagadosUltimos30d: paidLast30 };
+  } else if (agentCode === "billing") {
+    const [trialsExpiring, pastDue, active, totalTenants] = await Promise.all([
+      db.tenantSubscription.count({ where: { status: "TRIAL", trialEndsAt: { lte: new Date(now.getTime() + 14 * 86400000), gte: now } } }),
+      db.tenantSubscription.count({ where: { status: "PAST_DUE" } }),
+      db.tenantSubscription.count({ where: { status: "ACTIVE" } }),
+      db.tenant.count({ where: { active: true } }),
     ]);
-    summary = { ...summary, ticketsAbiertos: open, ticketsUrgentes: urgent };
+    summary = { ...summary, trialsProximos14d: trialsExpiring, tenantsPastDue: pastDue, tenantsActivos: active, totalTenants };
+  } else if (agentCode === "security") {
+    const [criticalEvents, failedLogins24h, lockedUsers, mfaEnabled] = await Promise.all([
+      db.securityEvent.count({ where: { severity: "CRITICAL", createdAt: { gte: new Date(now.getTime() - 7 * 86400000) } } }),
+      db.securityEvent.count({ where: { type: "LOGIN_FAILED", createdAt: { gte: new Date(now.getTime() - 86400000) } } }),
+      db.user.count({ where: { tenantId, lockedUntil: { gt: now } } }),
+      db.userMfa.count({ where: { tenantId, enabled: true } }),
+    ]);
+    summary = { ...summary, eventosCriticos7d: criticalEvents, loginsFallidos24h: failedLogins24h, cuentasBloqueadas: lockedUsers, usuariosConMfa: mfaEnabled };
   }
 
   await db.aiContextPack.create({

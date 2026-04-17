@@ -75,7 +75,17 @@ function getVisibleGroups(role: Role, isSuperAdmin: boolean) {
     .filter((g) => g.items.length > 0);
 }
 
-export function Sidebar({ role, isSuperAdmin = false }: { role: Role; isSuperAdmin?: boolean }) {
+export function Sidebar({
+  role,
+  isSuperAdmin = false,
+  appName = "TodoMueble",
+  appInitials = "TM",
+}: {
+  role: Role;
+  isSuperAdmin?: boolean;
+  appName?: string;
+  appInitials?: string;
+}) {
   const pathname = usePathname();
   const groups = getVisibleGroups(role, isSuperAdmin);
   const [open, setOpen] = useState(false);
@@ -122,9 +132,9 @@ export function Sidebar({ role, isSuperAdmin = false }: { role: Role; isSuperAdm
         <div className="flex h-14 items-center px-5 border-b border-[#1a2d4a]">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center animate-glow">
-              <span className="text-white font-black text-[11px]">TM</span>
+              <span className="text-white font-black text-[11px]">{appInitials}</span>
             </div>
-            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">TodoMueble</span>
+            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{appName}</span>
           </Link>
         </div>
         {nav}
@@ -134,9 +144,9 @@ export function Sidebar({ role, isSuperAdmin = false }: { role: Role; isSuperAdm
         <div className="flex h-14 items-center px-5 border-b border-[#1a2d4a]">
           <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-md bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-              <span className="text-white font-black text-[11px]">TM</span>
+              <span className="text-white font-black text-[11px]">{appInitials}</span>
             </div>
-            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">TodoMueble</span>
+            <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{appName}</span>
           </Link>
         </div>
         {nav}
