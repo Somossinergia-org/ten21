@@ -42,6 +42,7 @@ const navGroups: NavGroup[] = [
   // === AUTOMATIZACION ===
   { title: "Automatizacion", items: [
     { label: "Cockpit IA", href: "/ai/cockpit", roles: ["JEFE"], icon: <Brain size={16} /> },
+    { label: "Misiones", href: "/ai/missions", roles: ["JEFE"], icon: <Zap size={16} /> },
     { label: "Automatizaciones", href: "/automations", roles: ["JEFE"], icon: <Zap size={16} /> },
     { label: "Notificaciones", href: "/notifications", roles: ["JEFE", "ALMACEN", "REPARTO"], icon: <Bell size={16} /> },
   ]},

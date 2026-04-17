@@ -1950,3 +1950,143 @@ model AiPersonaEval {
 
   @@index([agentId])
 }
+
+// ============================================================
+// AUTONOMOUS OPERATIONS (V7.9)
+// ============================================================
+enum MissionStatus {
+  DRAFT_MISSION
+  PLANNING
+  PLANNED
+  EXECUTING
+  COMPLETED_MISSION
+  FAILED_MISSION
+  CANCELLED_MISSION
+}
+
+model AiMission {
+  id           String        @id @default(cuid())
+  tenantId     String
+  orderText    String        @db.Text
+  parsedIntent String?
+  status       MissionStatus @default(DRAFT_MISSION)
+  initiatedById String
+  totalSteps   Int           @default(0)
+  completedSteps Int         @default(0)
+  failedSteps  Int           @default(0)
+  summaryJson  Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  steps AiMissionStep[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum MissionStepStatus {
+  PENDING_STEP
+  DRY_RUN_STEP
+  DRY_RUN_DONE
+  PENDING_CONFIRMATION
+  EXECUTING_STEP
+  COMPLETED_STEP
+  FAILED_STEP
+  SKIPPED_STEP
+  DENIED_STEP
+}
+
+model AiMissionStep {
+  id              String            @id @default(cuid())
+  missionId       String
+  mission         AiMission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  stepOrder       Int
+  agentCode       String
+  actionCode      String
+  description     String
+  inputJson       Json?
+  dryRunResultJson Json?
+  executeResultJson Json?
+  status          MissionStepStatus @default(PENDING_STEP)
+  riskLevel       String            @default("LOW")
+  requiresConfirm Boolean           @default(false)
+  confirmedById   String?
+  confirmedAt     DateTime?
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  tenantId        String
+  createdAt       DateTime          @default(now())
+
+  @@index([missionId])
+  @@index([tenantId])
+}
+
+enum ActionRiskLevel {
+  ACTION_LOW
+  ACTION_MEDIUM
+  ACTION_HIGH
+  ACTION_CRITICAL
+}
+
+model ActionRegistryEntry {
+  id                      String          @id @default(cuid())
+  actionCode              String          @unique
+  domain                  String
+  description             String
+  riskLevel               ActionRiskLevel @default(ACTION_LOW)
+  requiresConfirmation    Boolean         @default(false)
+  allowedRolesJson        Json?
+  allowedAgentsJson       Json?
+  tenantScoped            Boolean         @default(true)
+  idempotent              Boolean         @default(true)
+  dryRunSupported         Boolean         @default(true)
+  auditRequired           Boolean         @default(true)
+  forbiddenInRestrictedMode Boolean       @default(false)
+  featureFlag             String?
+  active                  Boolean         @default(true)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+}
+
+model AgentExecutionPolicy {
+  id                String   @id @default(cuid())
+  agentCode         String
+  actionCode        String
+  allowed           Boolean  @default(true)
+  autoExecute       Boolean  @default(false)
+  requiresDryRun    Boolean  @default(true)
+  maxExecutionsPerHour Int?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([agentCode, actionCode])
+  @@index([agentCode])
+}
+
+model AgentExecutionLog {
+  id              String   @id @default(cuid())
+  tenantId        String
+  missionId       String?
+  missionStepId   String?
+  agentCode       String
+  actionCode      String
+  mode            String   @default("dry-run") // dry-run | execute
+  inputJson       Json?
+  outputJson      Json?
+  success         Boolean
+  errorMessage    String?
+  durationMs      Int?
+  affectedEntities Json?
+  evidenceSummary String?
+  rollbackPossible Boolean @default(false)
+  initiatedById   String?
+  confirmedById   String?
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, agentCode])
+  @@index([missionId])
+  @@index([createdAt])
+}
