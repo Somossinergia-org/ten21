@@ -37,7 +37,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar role={session.user.role} />
+      <Sidebar role={session.user.role} isSuperAdmin={session.user.isSuperAdmin} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           userName={session.user.name}

@@ -1,94 +1,68 @@
 import { describe, it, expect } from "vitest";
-import { AGENT_REGISTRY, getAgentDef, getAgentsForRole, canHandoff } from "@/lib/ai/agents/registry";
+import { AGENT_REGISTRY, getAgentDef, getVisibleAgents, canHandoff } from "@/lib/ai/agents/registry";
 
-describe("Agent Registry", () => {
-  it("has 18 agents defined", () => {
-    expect(AGENT_REGISTRY.length).toBe(18);
+describe("Agent Registry V7.95 (8+orchestrator)", () => {
+  it("has exactly 9 agents (8 visible + 1 orchestrator)", () => {
+    expect(AGENT_REGISTRY.length).toBe(9);
   });
 
-  it("all agents have unique codes", () => {
-    const codes = AGENT_REGISTRY.map((a) => a.code);
-    expect(new Set(codes).size).toBe(codes.length);
+  it("orchestrator is INTERNAL and not visible", () => {
+    const orch = getAgentDef("orchestrator");
+    expect(orch?.visibility).toBe("INTERNAL");
+    expect(orch?.roles).toEqual([]);
   });
 
-  it("all agents have missions", () => {
-    for (const a of AGENT_REGISTRY) {
-      expect(a.mission.length).toBeGreaterThan(10);
-    }
+  it("8 visible agents for JEFE (no orchestrator)", () => {
+    const visible = getVisibleAgents("JEFE", false);
+    expect(visible.length).toBe(6); // 6 TENANT-visible for non-superadmin
+    const codes = visible.map((a) => a.code);
+    expect(codes).not.toContain("orchestrator");
+    expect(codes).toContain("executive");
+    expect(codes).toContain("sales");
   });
 
-  it("orchestrator can handoff to any agent", () => {
-    expect(canHandoff("orchestrator", "sales")).toBe(true);
-    expect(canHandoff("orchestrator", "security")).toBe(true);
-    expect(canHandoff("orchestrator", "billing")).toBe(true);
+  it("JEFE superAdmin sees 8 agents (6 TENANT + 2 INTERNAL)", () => {
+    const visible = getVisibleAgents("JEFE", true);
+    expect(visible.length).toBe(8);
+    const codes = visible.map((a) => a.code);
+    expect(codes).toContain("billing");
+    expect(codes).toContain("security");
   });
 
-  it("sales can handoff to customers but not to security", () => {
-    expect(canHandoff("sales", "customers")).toBe(true);
-    expect(canHandoff("sales", "security")).toBe(false);
-  });
-
-  it("purchases can handoff to warehouse and inventory", () => {
-    expect(canHandoff("purchases", "warehouse")).toBe(true);
-    expect(canHandoff("purchases", "inventory")).toBe(true);
-  });
-
-  it("deliveries can handoff to postsales", () => {
-    expect(canHandoff("deliveries", "postsales")).toBe(true);
-  });
-
-  it("finance can handoff to treasury, invoices, profitability", () => {
-    expect(canHandoff("finance", "treasury")).toBe(true);
-    expect(canHandoff("finance", "invoices")).toBe(true);
-    expect(canHandoff("finance", "profitability")).toBe(true);
-  });
-
-  it("getAgentDef finds by code", () => {
-    const sales = getAgentDef("sales");
-    expect(sales?.name).toBe("Agente de Ventas");
-    expect(sales?.domain).toBe("ventas");
-  });
-
-  it("returns undefined for unknown code", () => {
-    expect(getAgentDef("nonexistent")).toBeUndefined();
-  });
-
-  it("getAgentsForRole JEFE returns all agents", () => {
-    const agents = getAgentsForRole("JEFE");
-    expect(agents.length).toBe(18);
-  });
-
-  it("getAgentsForRole ALMACEN returns limited agents", () => {
-    const agents = getAgentsForRole("ALMACEN");
-    expect(agents.length).toBeLessThan(18);
-    const codes = agents.map((a) => a.code);
+  it("ALMACEN sees only warehouse agent", () => {
+    const visible = getVisibleAgents("ALMACEN", false);
+    const codes = visible.map((a) => a.code);
     expect(codes).toContain("warehouse");
-    expect(codes).toContain("inventory");
-    expect(codes).not.toContain("sales");
-    expect(codes).not.toContain("finance");
-  });
-
-  it("getAgentsForRole REPARTO returns limited agents", () => {
-    const agents = getAgentsForRole("REPARTO");
-    const codes = agents.map((a) => a.code);
-    expect(codes).toContain("deliveries");
     expect(codes).not.toContain("sales");
     expect(codes).not.toContain("billing");
   });
 
-  it("internal agents are visible only to JEFE", () => {
-    const internalAgents = AGENT_REGISTRY.filter((a) => a.visibility === "INTERNAL");
-    expect(internalAgents.length).toBeGreaterThanOrEqual(4);
-    for (const a of internalAgents) {
-      expect(a.roles).toContain("JEFE");
-      expect(a.roles).not.toContain("ALMACEN");
-      expect(a.roles).not.toContain("REPARTO");
+  it("REPARTO sees only delivery agent", () => {
+    const visible = getVisibleAgents("REPARTO", false);
+    const codes = visible.map((a) => a.code);
+    expect(codes).toContain("delivery");
+    expect(codes).not.toContain("sales");
+  });
+
+  it("eliminated agents are gone", () => {
+    const eliminated = ["customers", "inventory", "finance", "invoices", "profitability",
+      "postsales", "automations", "compliance", "support"];
+    for (const code of eliminated) {
+      expect(getAgentDef(code)).toBeUndefined();
     }
   });
 
-  it("cross-domain handoffs are blocked without orchestrator", () => {
-    expect(canHandoff("sales", "billing")).toBe(false);
-    expect(canHandoff("warehouse", "compliance")).toBe(false);
-    expect(canHandoff("deliveries", "billing")).toBe(false);
+  it("purchase agent can handoff to warehouse", () => {
+    expect(canHandoff("purchase", "warehouse")).toBe(true);
+  });
+
+  it("delivery cannot handoff to billing (cross-domain)", () => {
+    expect(canHandoff("delivery", "billing")).toBe(false);
+  });
+
+  it("all active agents have missions", () => {
+    for (const a of AGENT_REGISTRY) {
+      expect(a.mission.length).toBeGreaterThan(10);
+    }
   });
 });

@@ -54,6 +54,14 @@ export async function getCurrentUser() {
 /**
  * Helper to build a Prisma where clause filtered by tenant.
  */
+export async function requireSuperAdmin() {
+  const session = await requireAuth();
+  if (!session.user.isSuperAdmin) {
+    redirect(defaultPageByRole[session.user.role]);
+  }
+  return session;
+}
+
 export function tenantWhere(tenantId: string) {
   return { tenantId };
 }

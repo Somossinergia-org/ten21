@@ -337,6 +337,16 @@ async function skipStep(stepId: string, reason: string) {
 }
 
 export async function confirmStep(tenantId: string, stepId: string, confirmedById: string) {
+  // P0: Secure confirmation — verify tenant, state, and permissions
+  const step = await db.aiMissionStep.findFirst({
+    where: { id: stepId, tenantId },
+    include: { mission: { select: { tenantId: true } } },
+  });
+
+  if (!step) throw new Error("Paso no encontrado");
+  if (step.tenantId !== tenantId) throw new Error("Acceso denegado: tenant incorrecto");
+  if (step.status !== "PENDING_CONFIRMATION") throw new Error("Este paso no requiere confirmacion");
+
   return db.aiMissionStep.update({
     where: { id: stepId },
     data: { confirmedById, confirmedAt: new Date(), status: "PENDING_STEP" },

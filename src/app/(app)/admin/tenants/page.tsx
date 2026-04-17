@@ -1,9 +1,9 @@
-import { requireRole } from "@/lib/tenant";
+import { requireSuperAdmin } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
 import { db } from "@/lib/db";
 
 export default async function AdminTenantsPage() {
-  await requireRole(["JEFE"]);
+  await requireSuperAdmin();
 
   const tenants = await db.tenant.findMany({
     include: {

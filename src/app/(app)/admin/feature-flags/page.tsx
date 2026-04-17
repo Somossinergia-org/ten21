@@ -1,9 +1,9 @@
-import { requireRole } from "@/lib/tenant";
+import { requireSuperAdmin } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
 import { db } from "@/lib/db";
 
 export default async function FeatureFlagsPage() {
-  await requireRole(["JEFE"]);
+  await requireSuperAdmin();
 
   const flags = await db.featureFlag.findMany({
     orderBy: [{ scope: "asc" }, { code: "asc" }],

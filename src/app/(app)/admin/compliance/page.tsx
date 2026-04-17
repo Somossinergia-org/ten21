@@ -1,10 +1,10 @@
-import { requireRole } from "@/lib/tenant";
+import { requireSuperAdmin } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
 import * as complianceService from "@/services/compliance.service";
 import { AdminComplianceClient } from "./admin-compliance-client";
 
 export default async function AdminCompliancePage() {
-  await requireRole(["JEFE"]);
+  await requireSuperAdmin();
   const deletions = await complianceService.listDeletionRequests();
 
   return (

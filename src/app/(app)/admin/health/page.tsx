@@ -1,10 +1,10 @@
-import { requireRole } from "@/lib/tenant";
+import { requireSuperAdmin } from "@/lib/tenant";
 import { PageHeader } from "@/components/layout/page-header";
 import * as healthService from "@/services/health.service";
 import { HealthClient } from "./health-client";
 
 export default async function HealthPage() {
-  await requireRole(["JEFE"]);
+  await requireSuperAdmin();
   const [events, summary] = await Promise.all([
     healthService.listEvents({ limit: 50 }),
     healthService.getSummary(),

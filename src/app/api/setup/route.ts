@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { PrismaClient, Role, PurchaseOrderType, VehicleStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const SETUP_SECRET = process.env.SETUP_SECRET || "ten21-setup-2026";
+const SETUP_SECRET = process.env.SETUP_SECRET;
+if (!SETUP_SECRET) console.warn("[setup] WARNING: SETUP_SECRET not set — endpoint disabled");
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +26,32 @@ export async function POST(request: Request) {
 
     // If force, delete everything (order respects FK constraints)
     if (force && existing) {
+      // V7.9 tables
+      await prisma.agentExecutionLog.deleteMany();
+      await prisma.agentExecutionPolicy.deleteMany();
+      await prisma.actionRegistryEntry.deleteMany();
+      await prisma.aiMissionStep.deleteMany();
+      await prisma.aiMission.deleteMany();
+      // V7.8 tables
+      await prisma.aiPersonaEval.deleteMany();
+      await prisma.aiFeedbackSignal.deleteMany();
+      await prisma.aiEntityMemory.deleteMany();
+      await prisma.aiDocumentReadingProfile.deleteMany();
+      await prisma.aiContextPack.deleteMany();
+      await prisma.aiOntologyRelation.deleteMany();
+      await prisma.aiGlossaryTerm.deleteMany();
+      await prisma.aiPersonalityProfile.deleteMany();
+      // V7.7 tables
+      await prisma.aiToolPolicy.deleteMany();
+      await prisma.aiDailyBrief.deleteMany();
+      await prisma.aiEvaluationRun.deleteMany();
+      await prisma.aiHandoff.deleteMany();
+      await prisma.aiActionSuggestion.deleteMany();
+      await prisma.aiInsight.deleteMany();
+      await prisma.aiMessage.deleteMany();
+      await prisma.aiConversation.deleteMany();
+      await prisma.aiAgentConfig.deleteMany();
+      await prisma.aiAgent.deleteMany();
       // V7 tables
       await prisma.backupJob.deleteMany();
       await prisma.securityEvent.deleteMany();
