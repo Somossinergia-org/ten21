@@ -1,68 +1,90 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { chat, generateBriefing, detectAnomalies } from "@/lib/gemini";
-
-async function getBusinessContext(tenantId: string) {
-  const [incidents, orders, receptions, deliveries, vehicles] = await Promise.all([
-    db.incident.findMany({ where: { tenantId }, select: { type: true, status: true, description: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 10 }),
-    db.purchaseOrder.findMany({ where: { tenantId }, select: { orderNumber: true, status: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 10 }),
-    db.reception.findMany({ where: { tenantId }, select: { receptionNumber: true, status: true, receivedAt: true }, orderBy: { receivedAt: "desc" }, take: 10 }),
-    db.delivery.findMany({ where: { tenantId }, select: { deliveryNumber: true, status: true, customerName: true, scheduledDate: true }, orderBy: { createdAt: "desc" }, take: 10 }),
-    db.vehicle.findMany({ where: { tenantId }, select: { name: true, plate: true, status: true } }),
-  ]);
-
-  const openIncidents = incidents.filter((i) => i.status !== "CLOSED");
-  const pendingOrders = orders.filter((o) => o.status === "SENT" || o.status === "PARTIAL");
-
-  return `
-INCIDENCIAS ABIERTAS (${openIncidents.length}):
-${openIncidents.map((i) => `- ${i.type}: ${i.description} (${i.status})`).join("\n") || "Ninguna"}
-
-PEDIDOS PENDIENTES (${pendingOrders.length}):
-${pendingOrders.map((o) => `- ${o.orderNumber}: ${o.status}`).join("\n") || "Ninguno"}
-
-RECEPCIONES RECIENTES:
-${receptions.slice(0, 5).map((r) => `- ${r.receptionNumber}: ${r.status}`).join("\n") || "Ninguna"}
-
-ENTREGAS:
-${deliveries.slice(0, 5).map((d) => `- ${d.deliveryNumber}: ${d.customerName} (${d.status})`).join("\n") || "Ninguna"}
-
-VEHICULOS:
-${vehicles.map((v) => `- ${v.name} (${v.plate}): ${v.status}`).join("\n") || "Ninguno"}
-
-RESUMEN:
-- Incidencias abiertas: ${openIncidents.length}
-- Pedidos pendientes: ${pendingOrders.length}
-- Total recepciones: ${receptions.length}
-- Total entregas: ${deliveries.length}
-- Vehiculos: ${vehicles.length}
-`.trim();
-}
+import { askAgentCognitive, buildContextPack } from "@/services/ai-cognitive.service";
+import { ensureAgentsSeeded } from "@/services/ai-agent.service";
+import { generateBriefing, detectAnomalies } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+  const tenantId = session.user.tenantId;
+  const userId = session.user.id;
   const body = await req.json();
-  const { action, message } = body;
+  const { action, message, agentCode: requestedAgent } = body;
 
-  const context = await getBusinessContext(session.user.tenantId);
+  await ensureAgentsSeeded();
+
+  // V8.1: Use cognitive layer with real agent
+  const agentCode = requestedAgent || "executive";
 
   if (action === "chat") {
-    const response = await chat(message || "¿Cómo está el negocio?", context);
-    return NextResponse.json({ response });
+    try {
+      const contextPack = await buildContextPack(tenantId, agentCode);
+      const contextStr = JSON.stringify(contextPack, null, 2);
+      const response = await askAgentCognitive(tenantId, agentCode, message || "¿Cómo está el negocio?", contextStr);
+
+      // Persist conversation
+      await persistTurn(tenantId, userId, agentCode, message || "¿Cómo está el negocio?", response);
+
+      return NextResponse.json({ response, agentCode });
+    } catch (e) {
+      console.error("[agent] cognitive chat error:", e);
+      return NextResponse.json({ response: "Error al procesar. Inténtalo de nuevo.", agentCode });
+    }
   }
 
   if (action === "briefing") {
-    const response = await generateBriefing(context);
-    return NextResponse.json({ response });
+    try {
+      const contextPack = await buildContextPack(tenantId, "executive");
+      const contextStr = JSON.stringify(contextPack, null, 2);
+      const response = await askAgentCognitive(
+        tenantId, "executive",
+        "Genera un briefing ejecutivo del día. Prioridades, riesgos y acciones concretas.",
+        contextStr,
+      );
+
+      await persistTurn(tenantId, userId, "executive", "Briefing del día", response);
+
+      return NextResponse.json({ response, agentCode: "executive" });
+    } catch (e) {
+      console.error("[agent] briefing error:", e);
+      const fallback = await generateBriefing(JSON.stringify(await buildContextPack(tenantId, "executive")));
+      return NextResponse.json({ response: fallback, agentCode: "executive" });
+    }
   }
 
   if (action === "anomalies") {
-    const alerts = await detectAnomalies(context);
+    const contextPack = await buildContextPack(tenantId, "executive");
+    const alerts = await detectAnomalies(JSON.stringify(contextPack));
     return NextResponse.json({ alerts });
   }
 
   return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
+}
+
+async function persistTurn(tenantId: string, userId: string, agentCode: string, userMessage: string, agentResponse: string) {
+  try {
+    const agent = await db.aiAgent.findUnique({ where: { code: agentCode } });
+    if (!agent) return;
+
+    const conversation = await db.aiConversation.create({
+      data: {
+        tenantId,
+        agentId: agent.id,
+        userId,
+        scopeType: "MODULE",
+      },
+    });
+
+    await db.aiMessage.createMany({
+      data: [
+        { conversationId: conversation.id, role: "USER_MSG", content: userMessage },
+        { conversationId: conversation.id, role: "AGENT_MSG", content: agentResponse },
+      ],
+    });
+  } catch (e) {
+    console.error("[agent] persist turn error:", e);
+  }
 }
