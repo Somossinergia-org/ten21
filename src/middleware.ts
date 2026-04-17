@@ -27,5 +27,6 @@ export const config = {
     "/automations/:path*",
     "/admin/:path*",
     "/onboarding/:path*",
+    "/ai/:path*",
   ],
 };

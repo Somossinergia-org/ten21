@@ -1532,3 +1532,263 @@ model BackupJob {
   @@index([tenantId])
   @@index([status])
 }
+
+// ============================================================
+// AI AGENT SWARM (V7.7)
+// ============================================================
+enum AiVisibilityScope {
+  TENANT
+  INTERNAL
+  GLOBAL
+}
+
+model AiAgent {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  domain          String
+  active          Boolean           @default(true)
+  visibilityScope AiVisibilityScope @default(TENANT)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  configs       AiAgentConfig[]
+  conversations AiConversation[]
+  insights      AiInsight[]
+  actions       AiActionSuggestion[]
+  handoffsFrom  AiHandoff[]        @relation("handoffFrom")
+  handoffsTo    AiHandoff[]        @relation("handoffTo")
+  evaluations   AiEvaluationRun[]
+  toolPolicies  AiToolPolicy[]
+}
+
+model AiAgentConfig {
+  id                  String   @id @default(cuid())
+  tenantId            String?
+  agentId             String
+  agent               AiAgent  @relation(fields: [agentId], references: [id])
+  modelProvider       String   @default("gemini")
+  modelName           String   @default("gemini-2.5-flash")
+  systemPromptVersion String   @default("v1")
+  thresholdsJson      Json?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([agentId])
+}
+
+enum AiConversationScope {
+  MODULE
+  EXECUTIVE
+  ALERT
+  SUPPORT
+}
+
+enum AiConversationStatus {
+  OPEN_CONV
+  CLOSED_CONV
+  ARCHIVED
+}
+
+model AiConversation {
+  id        String                 @id @default(cuid())
+  tenantId  String
+  agentId   String
+  agent     AiAgent                @relation(fields: [agentId], references: [id])
+  userId    String
+  scopeType AiConversationScope    @default(MODULE)
+  scopeId   String?
+  status    AiConversationStatus   @default(OPEN_CONV)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  messages AiMessage[]
+
+  @@index([tenantId, userId])
+  @@index([agentId])
+}
+
+enum AiMessageRole {
+  SYSTEM_MSG
+  USER_MSG
+  AGENT_MSG
+  TOOL_MSG
+  SUMMARY_MSG
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiMessageRole
+  content        String         @db.Text
+  metadataJson   Json?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId])
+}
+
+enum AiInsightSeverity {
+  AI_INFO
+  AI_WARNING
+  AI_HIGH
+  AI_CRITICAL
+}
+
+enum AiInsightStatus {
+  NEW
+  ACKNOWLEDGED
+  DISMISSED
+  CONVERTED_TO_ACTION
+}
+
+model AiInsight {
+  id              String            @id @default(cuid())
+  tenantId        String
+  agentId         String
+  agent           AiAgent           @relation(fields: [agentId], references: [id])
+  entityType      String?
+  entityId        String?
+  severity        AiInsightSeverity
+  category        String
+  title           String
+  summary         String            @db.Text
+  evidenceJson    Json?
+  confidenceScore Int?
+  status          AiInsightStatus   @default(NEW)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  actions AiActionSuggestion[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([agentId])
+}
+
+enum AiActionPriority {
+  AI_LOW
+  AI_NORMAL
+  AI_HIGH
+  AI_URGENT
+}
+
+enum AiActionStatus {
+  AI_OPEN
+  ACCEPTED
+  REJECTED
+  EXECUTED
+  AI_EXPIRED
+}
+
+model AiActionSuggestion {
+  id                   String           @id @default(cuid())
+  tenantId             String
+  agentId              String
+  agent                AiAgent          @relation(fields: [agentId], references: [id])
+  targetType           String
+  targetId             String?
+  priority             AiActionPriority @default(AI_NORMAL)
+  title                String
+  recommendation       String           @db.Text
+  rationale            String           @db.Text
+  evidenceJson         Json?
+  requiresConfirmation Boolean          @default(true)
+  status               AiActionStatus   @default(AI_OPEN)
+  createdByInsightId   String?
+  insight              AiInsight?       @relation(fields: [createdByInsightId], references: [id])
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum AiHandoffUrgency {
+  HANDOFF_LOW
+  HANDOFF_NORMAL
+  HANDOFF_HIGH
+  HANDOFF_URGENT
+}
+
+enum AiHandoffStatus {
+  HANDOFF_CREATED
+  HANDOFF_ACCEPTED
+  HANDOFF_COMPLETED
+  HANDOFF_REJECTED
+}
+
+model AiHandoff {
+  id          String           @id @default(cuid())
+  tenantId    String
+  fromAgentId String
+  fromAgent   AiAgent          @relation("handoffFrom", fields: [fromAgentId], references: [id])
+  toAgentId   String
+  toAgent     AiAgent          @relation("handoffTo", fields: [toAgentId], references: [id])
+  reason      String
+  payloadJson Json?
+  urgency     AiHandoffUrgency @default(HANDOFF_NORMAL)
+  status      AiHandoffStatus  @default(HANDOFF_CREATED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([tenantId])
+}
+
+enum AiEvalType {
+  PROMPT_EVAL
+  CLASSIFICATION_EVAL
+  HALLUCINATION_EVAL
+  PERMISSION_EVAL
+  ROUTING_EVAL
+  QUALITY_EVAL
+}
+
+enum AiEvalStatus {
+  EVAL_QUEUED
+  EVAL_RUNNING
+  EVAL_PASSED
+  EVAL_FAILED
+}
+
+model AiEvaluationRun {
+  id             String       @id @default(cuid())
+  tenantId       String?
+  agentId        String?
+  agent          AiAgent?     @relation(fields: [agentId], references: [id])
+  evaluationType AiEvalType
+  status         AiEvalStatus @default(EVAL_QUEUED)
+  resultJson     Json?
+  createdAt      DateTime     @default(now())
+  finishedAt     DateTime?
+
+  @@index([agentId])
+}
+
+model AiDailyBrief {
+  id               String   @id @default(cuid())
+  tenantId         String
+  generatedForDate DateTime
+  executiveSummary String   @db.Text
+  prioritiesJson   Json?
+  risksJson        Json?
+  actionsJson      Json?
+  createdAt        DateTime @default(now())
+
+  @@unique([tenantId, generatedForDate])
+  @@index([tenantId])
+}
+
+model AiToolPolicy {
+  id                   String   @id @default(cuid())
+  agentId              String
+  agent                AiAgent  @relation(fields: [agentId], references: [id])
+  allowedToolsJson     Json?
+  forbiddenToolsJson   Json?
+  allowedActionsJson   Json?
+  forbiddenActionsJson Json?
+  updatedAt            DateTime @updatedAt
+
+  @@index([agentId])
+}
