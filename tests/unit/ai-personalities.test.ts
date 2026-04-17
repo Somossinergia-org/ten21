@@ -5,8 +5,8 @@ import { ONTOLOGY, getRelations, getInverseRelations } from "@/lib/ai/ontology/r
 import { DOCUMENT_READING_PROFILES, getDocumentProfile } from "@/lib/ai/document-reading/registry";
 
 describe("Personality Registry", () => {
-  it("has 18 personalities matching agent registry", () => {
-    expect(PERSONALITIES.length).toBe(18);
+  it("has 9 personalities matching V7.95 reduced agent registry", () => {
+    expect(PERSONALITIES.length).toBe(9);
   });
 
   it("every personality has system prompt with base rules", () => {
@@ -18,7 +18,7 @@ describe("Personality Registry", () => {
 
   it("every personality has distinct role", () => {
     const roles = PERSONALITIES.map((p) => p.roleSimulated);
-    expect(new Set(roles).size).toBeGreaterThanOrEqual(15);
+    expect(new Set(roles).size).toBe(PERSONALITIES.length);
   });
 
   it("every personality has vocabulary", () => {
