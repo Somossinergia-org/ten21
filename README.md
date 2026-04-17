@@ -1,6 +1,8 @@
-# TodoMueble — Plataforma de Gestion Operativa (V7.6)
+# TodoMueble — Plataforma de Gestion Operativa (V7.8)
 
-Sistema SaaS de control operativo para tiendas de muebles y electrodomesticos. Cubre el ciclo completo: compras, recepcion, inventario, ventas, entregas, posventa, facturacion, tesoreria, rentabilidad, automatizaciones omnicanal, PWA movil, billing SaaS, compliance RGPD y seguridad avanzada. V7.6 añade sistema de vistas multi-patron: kanban, cards, tablas, split view y cockpit financiero.
+Sistema SaaS de control operativo para tiendas de muebles y electrodomesticos. Cubre el ciclo completo: compras, recepcion, inventario, ventas, entregas, posventa, facturacion, tesoreria, rentabilidad, automatizaciones omnicanal, PWA movil, billing SaaS, compliance RGPD y seguridad avanzada.
+
+V7.7-7.8 añade enjambre de 18 agentes IA especializados con personalidad profesional, ontologia de negocio, lectura documental, memoria operativa y feedback continuo.
 
 ## Que NO es este sistema
 

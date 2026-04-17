@@ -1792,3 +1792,161 @@ model AiToolPolicy {
 
   @@index([agentId])
 }
+
+// ============================================================
+// AI COGNITIVE LAYER (V7.8)
+// ============================================================
+model AiPersonalityProfile {
+  id                   String   @id @default(cuid())
+  agentId              String
+  tenantId             String?
+  roleSimulated        String
+  tone                 String
+  vocabularyJson       Json?
+  prohibitedPhrasesJson Json?
+  reasoningStyle       String?
+  outputStyle          String?
+  escalationRulesJson  Json?
+  confidenceRulesJson  Json?
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([agentId, tenantId])
+  @@index([agentId])
+}
+
+model AiGlossaryTerm {
+  id                String   @id @default(cuid())
+  tenantId          String?
+  domain            String
+  term              String
+  shortDefinition   String
+  longDefinition    String?  @db.Text
+  synonymsJson      Json?
+  relatedEntitiesJson Json?
+  businessLanguage  String?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([domain, term, tenantId])
+  @@index([domain])
+}
+
+model AiOntologyRelation {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  sourceType   String
+  relationType String
+  targetType   String
+  description  String
+  createdAt    DateTime @default(now())
+
+  @@index([sourceType])
+  @@index([targetType])
+}
+
+model AiContextPack {
+  id          String   @id @default(cuid())
+  tenantId    String
+  agentId     String
+  packType    String
+  summaryJson Json
+  generatedAt DateTime @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, agentId, packType])
+}
+
+model AiDocumentReadingProfile {
+  id                   String   @id @default(cuid())
+  agentId              String
+  documentType         String
+  fieldsExpectedJson   Json?
+  ambiguityRulesJson   Json?
+  inconsistencyRulesJson Json?
+  outputTemplateJson   Json?
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([agentId, documentType])
+}
+
+enum AiMemoryType {
+  SUMMARY
+  RISK
+  PREFERENCE
+  PATTERN
+}
+
+model AiEntityMemory {
+  id              String       @id @default(cuid())
+  tenantId        String
+  agentId         String
+  entityType      String
+  entityId        String
+  memoryType      AiMemoryType
+  content         String       @db.Text
+  confidenceScore Int?
+  lastUsedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([tenantId, agentId])
+  @@index([entityType, entityId])
+}
+
+enum AiFeedbackSignalType {
+  USEFUL
+  NOT_USEFUL
+  INCORRECT
+  TOO_GENERIC
+  TOO_TECHNICAL
+  MISSED_RISK
+}
+
+model AiFeedbackSignal {
+  id             String               @id @default(cuid())
+  tenantId       String
+  agentId        String
+  userId         String
+  conversationId String?
+  messageId      String?
+  signalType     AiFeedbackSignalType
+  notes          String?
+  createdAt      DateTime             @default(now())
+
+  @@index([tenantId, agentId])
+}
+
+enum AiPersonaEvalType {
+  DOMAIN_UNDERSTANDING
+  DOCUMENT_READING
+  TONE
+  PERMISSION_PERSONA
+  ACTION_QUALITY
+}
+
+enum AiPersonaEvalStatus {
+  PERSONA_PASSED
+  PERSONA_FAILED
+  PERSONA_REVIEW
+}
+
+model AiPersonaEval {
+  id           String              @id @default(cuid())
+  agentId      String
+  evalType     AiPersonaEvalType
+  inputJson    Json?
+  expectedJson Json?
+  actualJson   Json?
+  score        Int?
+  status       AiPersonaEvalStatus @default(PERSONA_REVIEW)
+  createdAt    DateTime            @default(now())
+  evaluatedAt  DateTime?
+
+  @@index([agentId])
+}
