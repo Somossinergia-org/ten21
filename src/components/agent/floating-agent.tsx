@@ -2,8 +2,16 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Bot, X, Send, Loader2, Sparkles, Zap, ChevronDown } from "lucide-react";
+import { CognitiveResponse } from "@/components/ai/cognitive-response";
+import { FeedbackButtons } from "@/components/ai/feedback-buttons";
 
-type Message = { role: "user" | "agent"; text: string; agentCode?: string };
+type Message = {
+  role: "user" | "agent";
+  text: string;
+  agentCode?: string;
+  messageId?: string;
+  conversationId?: string;
+};
 
 const AGENTS = [
   { code: "executive", label: "Asistente Ejecutivo", icon: "📊" },
@@ -43,7 +51,13 @@ export function FloatingAgent() {
         body: JSON.stringify({ action: "chat", message: msg, agentCode: agent }),
       });
       const data = await res.json();
-      setMessages((m) => [...m, { role: "agent", text: data.response || "Sin respuesta", agentCode: data.agentCode }]);
+      setMessages((m) => [...m, {
+        role: "agent",
+        text: data.response || "Sin respuesta",
+        agentCode: data.agentCode,
+        messageId: data.messageId,
+        conversationId: data.conversationId,
+      }]);
     } catch {
       setMessages((m) => [...m, { role: "agent", text: "Error de conexion." }]);
     }
@@ -60,7 +74,13 @@ export function FloatingAgent() {
         body: JSON.stringify({ action: "briefing" }),
       });
       const data = await res.json();
-      setMessages((m) => [...m, { role: "agent", text: data.response, agentCode: "executive" }]);
+      setMessages((m) => [...m, {
+        role: "agent",
+        text: data.response,
+        agentCode: "executive",
+        messageId: data.messageId,
+        conversationId: data.conversationId,
+      }]);
     } catch {
       setMessages((m) => [...m, { role: "agent", text: "Error al generar el briefing." }]);
     }
@@ -77,7 +97,7 @@ export function FloatingAgent() {
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-4rem)] rounded-2xl bg-[#0a1628] border border-[#1a2d4a] shadow-2xl shadow-cyan-500/10 flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-4rem)] rounded-2xl bg-[#0a1628] border border-[#1a2d4a] shadow-2xl shadow-cyan-500/10 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a2d4a] bg-[#050a14]">
             <div className="flex items-center gap-2 relative">
               <button onClick={() => setShowPicker(!showPicker)} className="flex items-center gap-2 hover:opacity-80">
@@ -124,16 +144,25 @@ export function FloatingAgent() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
-                  m.role === "user"
-                    ? "bg-cyan-500/15 text-cyan-100 rounded-br-md"
-                    : "bg-[#050a14] border border-[#1a2d4a] text-slate-300 rounded-bl-md"
-                }`}>
-                  {m.role === "agent" && m.agentCode && (
-                    <p className="text-[9px] text-cyan-500/50 mb-1 font-mono">{m.agentCode}</p>
-                  )}
-                  <span className="whitespace-pre-wrap">{m.text}</span>
-                </div>
+                {m.role === "user" ? (
+                  <div className="max-w-[85%] bg-cyan-500/15 text-cyan-100 rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed">
+                    {m.text}
+                  </div>
+                ) : (
+                  <div className="max-w-[92%] w-full">
+                    {m.agentCode && (
+                      <p className="text-[9px] text-cyan-500/50 mb-1 font-mono">{m.agentCode}</p>
+                    )}
+                    <CognitiveResponse text={m.text} />
+                    {m.agentCode && m.messageId && (
+                      <FeedbackButtons
+                        agentCode={m.agentCode}
+                        messageId={m.messageId}
+                        conversationId={m.conversationId}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {loading && (

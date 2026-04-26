@@ -36,7 +36,19 @@ ${context}
 PREGUNTA DEL USUARIO:
 ${question}
 
-RESPUESTA (respeta tono, formato y reglas):`;
+FORMATO DE SALIDA OBLIGATORIO (V8.2):
+Usa estos prefijos exactos al inicio de cada línea relevante. No los traduzcas, no los mezcles:
+HECHO: <dato concreto del sistema, con número o estado>
+HECHO: <otro dato>
+INFERENCIA: <tu lectura o hipótesis apoyada en los hechos>
+RECOMENDACION: <acción concreta propuesta>
+
+Reglas:
+- Al menos 1 HECHO si hay datos; si no hay datos, escribe "HECHO: No hay datos disponibles".
+- Máximo 3 HECHOS, 2 INFERENCIAS y 2 RECOMENDACIONES.
+- Nada fuera de estos prefijos salvo una primera línea de resumen (opcional, máximo 1 frase).
+
+RESPUESTA:`;
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -47,7 +59,7 @@ RESPUESTA (respeta tono, formato y reglas):`;
     return result.response.text();
   } catch (e) {
     console.error(`[ai-cognitive] ${agentCode} error:`, e);
-    return "No he podido procesar la consulta con contexto completo.";
+    return "HECHO: No he podido procesar la consulta con contexto completo.\nINFERENCIA: Puede ser un problema temporal de servicio.\nRECOMENDACION: Reintenta en unos segundos o revisa conectividad con el servicio de IA.";
   }
 }
 

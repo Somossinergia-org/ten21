@@ -16,19 +16,23 @@ export async function POST(req: Request) {
 
   await ensureAgentsSeeded();
 
-  // V8.1: Use cognitive layer with real agent
   const agentCode = requestedAgent || "executive";
 
   if (action === "chat") {
     try {
       const contextPack = await buildContextPack(tenantId, agentCode);
       const contextStr = JSON.stringify(contextPack, null, 2);
-      const response = await askAgentCognitive(tenantId, agentCode, message || "¿Cómo está el negocio?", contextStr);
+      const userMessage = message || "¿Cómo está el negocio?";
+      const response = await askAgentCognitive(tenantId, agentCode, userMessage, contextStr);
 
-      // Persist conversation
-      await persistTurn(tenantId, userId, agentCode, message || "¿Cómo está el negocio?", response);
+      const persisted = await persistTurn(tenantId, userId, agentCode, userMessage, response);
 
-      return NextResponse.json({ response, agentCode });
+      return NextResponse.json({
+        response,
+        agentCode,
+        conversationId: persisted?.conversationId,
+        messageId: persisted?.agentMessageId,
+      });
     } catch (e) {
       console.error("[agent] cognitive chat error:", e);
       return NextResponse.json({ response: "Error al procesar. Inténtalo de nuevo.", agentCode });
@@ -39,15 +43,17 @@ export async function POST(req: Request) {
     try {
       const contextPack = await buildContextPack(tenantId, "executive");
       const contextStr = JSON.stringify(contextPack, null, 2);
-      const response = await askAgentCognitive(
-        tenantId, "executive",
-        "Genera un briefing ejecutivo del día. Prioridades, riesgos y acciones concretas.",
-        contextStr,
-      );
+      const userMessage = "Genera un briefing ejecutivo del día. Prioridades, riesgos y acciones concretas.";
+      const response = await askAgentCognitive(tenantId, "executive", userMessage, contextStr);
 
-      await persistTurn(tenantId, userId, "executive", "Briefing del día", response);
+      const persisted = await persistTurn(tenantId, userId, "executive", "Briefing del día", response);
 
-      return NextResponse.json({ response, agentCode: "executive" });
+      return NextResponse.json({
+        response,
+        agentCode: "executive",
+        conversationId: persisted?.conversationId,
+        messageId: persisted?.agentMessageId,
+      });
     } catch (e) {
       console.error("[agent] briefing error:", e);
       const fallback = await generateBriefing(JSON.stringify(await buildContextPack(tenantId, "executive")));
@@ -64,10 +70,16 @@ export async function POST(req: Request) {
   return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
 }
 
-async function persistTurn(tenantId: string, userId: string, agentCode: string, userMessage: string, agentResponse: string) {
+async function persistTurn(
+  tenantId: string,
+  userId: string,
+  agentCode: string,
+  userMessage: string,
+  agentResponse: string,
+): Promise<{ conversationId: string; agentMessageId: string } | null> {
   try {
     const agent = await db.aiAgent.findUnique({ where: { code: agentCode } });
-    if (!agent) return;
+    if (!agent) return null;
 
     const conversation = await db.aiConversation.create({
       data: {
@@ -78,13 +90,16 @@ async function persistTurn(tenantId: string, userId: string, agentCode: string, 
       },
     });
 
-    await db.aiMessage.createMany({
-      data: [
-        { conversationId: conversation.id, role: "USER_MSG", content: userMessage },
-        { conversationId: conversation.id, role: "AGENT_MSG", content: agentResponse },
-      ],
+    await db.aiMessage.create({
+      data: { conversationId: conversation.id, role: "USER_MSG", content: userMessage },
     });
+    const agentMessage = await db.aiMessage.create({
+      data: { conversationId: conversation.id, role: "AGENT_MSG", content: agentResponse },
+    });
+
+    return { conversationId: conversation.id, agentMessageId: agentMessage.id };
   } catch (e) {
     console.error("[agent] persist turn error:", e);
+    return null;
   }
 }
