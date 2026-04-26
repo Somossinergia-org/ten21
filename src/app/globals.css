@@ -1,25 +1,144 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #050a14;
+  --bg-card: #0a1628;
+  --bg-card-hover: #0f1f38;
+  --border: #1a2d4a;
+  --border-glow: #0ea5e9;
+  --text: #e2e8f0;
+  --text-dim: #64748b;
+  --text-muted: #334155;
+  --cyan: #06b6d4;
+  --cyan-glow: #22d3ee;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --green: #22c55e;
+  --orange: #f59e0b;
+  --purple: #a855f7;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Fira Code", "Cascadia Code", Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a2d4a; border-radius: 2px; }
+
+/* Glow effects */
+.glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 40px rgba(6, 182, 212, 0.05); }
+.glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 40px rgba(239, 68, 68, 0.05); }
+.glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.15); }
+.glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+
+/* HUD card */
+.hud-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.hud-card:hover {
+  border-color: #1e3a5f;
+  background: var(--bg-card-hover);
+}
+
+/* Animations */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in { animation: slide-in 0.3s ease-out; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.5s ease-out; }
+
+@keyframes scan {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.6); }
+}
+.animate-glow { animation: pulse-glow 2s infinite; }
+
+/* Override default white backgrounds for tables and forms */
+table { color: var(--text); }
+table th { color: var(--cyan) !important; background: rgba(6, 182, 212, 0.05) !important; border-bottom: 1px solid var(--border) !important; }
+table td { border-bottom: 1px solid rgba(26, 45, 74, 0.5) !important; }
+table tr:hover td { background: rgba(6, 182, 212, 0.03) !important; }
+
+input, select, textarea {
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--cyan) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
+
+/* Override Tailwind bg-white, bg-gray-50, etc in dark theme */
+.bg-white { background: var(--bg-card) !important; }
+.bg-gray-50, .bg-slate-50 { background: var(--bg) !important; }
+.bg-gray-100 { background: rgba(26, 45, 74, 0.5) !important; }
+.border-gray-200, .border-gray-100 { border-color: var(--border) !important; }
+.text-gray-900 { color: var(--text) !important; }
+.text-gray-700 { color: #94a3b8 !important; }
+.text-gray-500 { color: var(--text-dim) !important; }
+.text-gray-400 { color: var(--text-muted) !important; }
+.text-gray-300 { color: #475569 !important; }
+.hover\:bg-gray-50:hover { background: var(--bg-card-hover) !important; }
+.hover\:bg-gray-100:hover { background: rgba(6, 182, 212, 0.05) !important; }
+
+/* Badges keep their colors but with dark bg */
+.bg-red-50 { background: rgba(239, 68, 68, 0.1) !important; }
+.bg-green-50 { background: rgba(34, 197, 94, 0.1) !important; }
+.bg-blue-50 { background: rgba(59, 130, 246, 0.1) !important; }
+.bg-yellow-50 { background: rgba(245, 158, 11, 0.1) !important; }
+.bg-orange-50 { background: rgba(249, 115, 22, 0.1) !important; }
+.bg-purple-50 { background: rgba(168, 85, 247, 0.1) !important; }
+.bg-red-100 { background: rgba(239, 68, 68, 0.15) !important; }
+.bg-green-100 { background: rgba(34, 197, 94, 0.15) !important; }
+.bg-blue-100 { background: rgba(59, 130, 246, 0.15) !important; }
+.bg-yellow-100 { background: rgba(245, 158, 11, 0.15) !important; }
+.bg-orange-100 { background: rgba(249, 115, 22, 0.15) !important; }
+.bg-purple-100 { background: rgba(168, 85, 247, 0.15) !important; }
+
+/* FullCalendar dark */
+.fc { font-family: inherit !important; }
+.fc .fc-button {
+  border-radius: 8px !important; font-weight: 600 !important; font-size: 12px !important;
+  padding: 6px 14px !important; background-color: var(--bg-card) !important;
+  border-color: var(--border) !important; color: var(--cyan) !important;
+}
+.fc .fc-button:hover { background-color: var(--bg-card-hover) !important; }
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+  border-color: var(--cyan) !important;
+}
+.fc .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 800 !important; color: var(--text) !important; text-transform: capitalize !important; }
+.fc .fc-daygrid-event { border-radius: 6px !important; padding: 2px 6px !important; font-size: 11px !important; font-weight: 600 !important; border: none !important; }
+.fc .fc-daygrid-day-number { font-weight: 600 !important; color: var(--text-dim) !important; }
+.fc .fc-col-header-cell-cushion { font-weight: 700 !important; text-transform: uppercase !important; font-size: 10px !important; letter-spacing: 0.1em !important; color: var(--cyan) !important; }
+.fc .fc-day-today { background-color: rgba(6, 182, 212, 0.05) !important; }
+.fc td, .fc th { border-color: var(--border) !important; }
+.fc .fc-list-event { cursor: pointer; }
+.fc .fc-scrollgrid { border-color: var(--border) !important; }

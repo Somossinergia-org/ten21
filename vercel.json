@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-outbound",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/ai/sweep",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

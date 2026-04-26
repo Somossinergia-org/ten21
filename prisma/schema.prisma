@@ -15,6 +15,12 @@ model Tenant {
   name      String
   slug      String   @unique
   active    Boolean  @default(true)
+  planCode  String?
+  trialEndsAt DateTime?
+  suspendedAt DateTime?
+  suspensionReason String?
+  billingStatusSnapshot String?
+  complianceStatusSnapshot String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,6 +32,37 @@ model Tenant {
   incidents      Incident[]
   vehicles       Vehicle[]
   deliveries     Delivery[]
+  activityLogs   ActivityLog[]
+  attachments    Attachment[]
+  customers      Customer[]
+  notifications  Notification[]
+  salesOrders    SalesOrder[]
+  stockMovements StockMovement[]
+  postSaleTickets PostSaleTicket[]
+  customerInvoices  CustomerInvoice[]
+  treasuryEntries   TreasuryEntry[]
+  fileAssets        FileAsset[]
+  deliveryProofs    DeliveryProof[]
+  outboundMessages  OutboundMessage[]
+  automationRules   AutomationRule[]
+  notifTemplates    NotificationTemplate[]
+  tenantConfig      TenantConfig?
+  tenantBranding    TenantBranding?
+  tenantModules     TenantModule[]
+  tenantTemplates   TenantTemplate[]
+  importJobs        ImportJob[]
+  tenantOnboarding  TenantOnboarding?
+  featureFlags      FeatureFlag[]
+  supportCases      SupportCase[]
+  healthEvents      SystemHealthEvent[]
+  subscription      TenantSubscription?
+  billingInvoices   BillingInvoice[]
+  usageMetrics      UsageMetric[]
+  billingEvents     BillingEvent[]
+  dataExports       DataExportRequest[]
+  dataDeletions     DataDeletionRequest[]
+  securityEvents    SecurityEvent[]
+  backupJobs        BackupJob[]
 }
 
 // ============================================================
@@ -44,6 +81,9 @@ model User {
   password  String
   role      Role     @default(ALMACEN)
   active    Boolean  @default(true)
+  lastLoginAt      DateTime?
+  failedLoginCount Int      @default(0)
+  lockedUntil      DateTime?
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   createdAt DateTime @default(now())
@@ -51,8 +91,13 @@ model User {
 
   purchases          PurchaseOrder[]
   receptions         Reception[]
-  incidents          Incident[]
+  reportedIncidents  Incident[]  @relation("incidentReportedBy")
+  closedIncidents    Incident[]  @relation("incidentClosedBy")
   assignedDeliveries Delivery[]
+  salesOrders        SalesOrder[]
+  createdTickets     PostSaleTicket[] @relation("ticketCreatedBy")
+  assignedTickets    PostSaleTicket[] @relation("ticketAssignedTo")
+  customerInvoices   CustomerInvoice[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -66,13 +111,21 @@ model Product {
   ref         String
   name        String
   description String?
+  salePrice   Decimal?          // Precio de venta al público
+  defaultCost Decimal?          // Coste por defecto para margen estimado
+  category    String?           // Familia/categoría (texto libre)
+  brand       String?           // Marca del producto
   active      Boolean  @default(true)
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  purchaseLines PurchaseOrderLine[]
+  purchaseLines  PurchaseOrderLine[]
+  deliveryLines  DeliveryLine[]
+  salesLines     SalesOrderLine[]
+  inventory      ProductInventory?
+  stockMovements StockMovement[]
 
   @@unique([tenantId, ref])
   @@index([tenantId])
@@ -82,18 +135,23 @@ model Product {
 // PROVEEDORES
 // ============================================================
 model Supplier {
-  id        String   @id @default(cuid())
-  name      String
-  code      String
-  phone     String?
-  email     String?
-  active    Boolean  @default(true)
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  code            String
+  phone           String?
+  email           String?
+  taxId           String?           // CIF/NIF del proveedor
+  commercialTerms String?           // Condiciones comerciales
+  paymentTerms    String?           // Condiciones de pago
+  notes           String?
+  active          Boolean  @default(true)
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  orders PurchaseOrder[]
+  orders   PurchaseOrder[]
+  invoices SupplierInvoice[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -132,6 +190,7 @@ model PurchaseOrder {
 
   lines      PurchaseOrderLine[]
   receptions Reception[]
+  invoices   SupplierInvoice[]
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
@@ -224,8 +283,12 @@ model Incident {
   status       IncidentStatus @default(REGISTERED)
   description  String
   resolution   String?
+  reviewedAt   DateTime?
+  closedAt     DateTime?
+  closedById   String?
+  closedBy     User?          @relation("incidentClosedBy", fields: [closedById], references: [id])
   reportedById String
-  reportedBy   User           @relation(fields: [reportedById], references: [id])
+  reportedBy   User           @relation("incidentReportedBy", fields: [reportedById], references: [id])
   tenantId     String
   tenant       Tenant         @relation(fields: [tenantId], references: [id])
   createdAt    DateTime       @default(now())
@@ -254,19 +317,22 @@ enum DeliveryStatus {
 }
 
 model Vehicle {
-  id        String        @id @default(cuid())
-  plate     String
-  name      String
-  status    VehicleStatus @default(AVAILABLE)
-  active    Boolean       @default(true)
-  tenantId  String
-  tenant    Tenant        @relation(fields: [tenantId], references: [id])
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  plate        String
+  name         String
+  status       VehicleStatus @default(AVAILABLE)
+  active       Boolean       @default(true)
+  externalId   String?
+  lastSyncedAt DateTime?
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   deliveries Delivery[]
 
   @@unique([tenantId, plate])
+  @@unique([tenantId, externalId])
   @@index([tenantId])
   @@index([tenantId, status])
 }
@@ -278,7 +344,11 @@ model Delivery {
   vehicle         Vehicle?       @relation(fields: [vehicleId], references: [id])
   assignedToId    String?
   assignedTo      User?          @relation(fields: [assignedToId], references: [id])
-  customerName    String
+  customerId      String?
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  salesOrderId    String?
+  salesOrder      SalesOrder?    @relation(fields: [salesOrderId], references: [id])
+  customerName    String         // Mantenido para compatibilidad con datos existentes
   customerPhone   String?
   customerAddress String
   description     String
@@ -287,14 +357,1736 @@ model Delivery {
   deliveredAt     DateTime?
   startKm         Int?
   endKm           Int?
+  failedReason    String?
+  proofRequired   Boolean        @default(false)
   notes           String?
   tenantId        String
   tenant          Tenant         @relation(fields: [tenantId], references: [id])
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
+  lines           DeliveryLine[]
+  postSaleTickets PostSaleTicket[]
+  proofs          DeliveryProof[]
+
   @@unique([tenantId, deliveryNumber])
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([assignedToId])
+  @@index([customerId])
+  @@index([salesOrderId])
+}
+
+// ============================================================
+// ACTIVITY LOG — Auditoría completa de acciones del usuario
+// ============================================================
+model ActivityLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String?
+  userName  String?
+  action    String
+  entity    String
+  entityId  String?
+  entityRef String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, userId])
+}
+
+// ============================================================
+// ATTACHMENTS — Documentos adjuntos a cualquier entidad
+// ============================================================
+enum AttachmentEntity {
+  PURCHASE_ORDER
+  RECEPTION
+  INCIDENT
+  DELIVERY
+}
+
+model Attachment {
+  id          String           @id @default(cuid())
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  entity      AttachmentEntity
+  entityId    String
+  fileName    String
+  fileType    String
+  fileSize    Int
+  dataUrl     String           @db.Text
+  uploadedById String
+  uploadedByName String
+  notes       String?
+  createdAt   DateTime         @default(now())
+
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, createdAt])
+}
+
+// ============================================================
+// FACTURAS DE PROVEEDOR
+// ============================================================
+enum InvoiceStatus {
+  PENDING    // Pendiente de revision
+  VALIDATED  // Validada (cuadra con pedido)
+  MISMATCH   // No cuadra (diferencia de importe)
+  PAID       // Pagada
+}
+
+enum ReconciliationStatus {
+  NOT_CHECKED
+  MATCHED
+  MISMATCHED
+}
+
+model SupplierInvoice {
+  id                   String                @id @default(cuid())
+  invoiceNumber        String?
+  supplierId           String?
+  supplier             Supplier?             @relation(fields: [supplierId], references: [id])
+  supplierName         String?
+  supplierNif          String?
+  purchaseOrderId      String?
+  purchaseOrder        PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id])
+  concept              String?
+  baseAmount           Decimal?
+  taxAmount            Decimal?
+  totalAmount          Decimal?
+  taxRate              Decimal?
+  invoiceDate          DateTime?
+  dueDate              DateTime?
+  status               InvoiceStatus         @default(PENDING)
+  paidDate             DateTime?
+  varianceAmount       Decimal?
+  reconciliationStatus ReconciliationStatus  @default(NOT_CHECKED)
+  mismatchReason       String?
+  pdfDataUrl           String?               @db.Text
+  extractedData        Json?
+  notes                String?
+  tenantId             String
+  createdById          String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+model Customer {
+  id           String   @id @default(cuid())
+  fullName     String
+  phone        String?
+  email        String?
+  addressLine1 String
+  addressLine2 String?
+  city         String?
+  postalCode   String?
+  province     String?
+  notes            String?
+  allowEmail       Boolean  @default(false)
+  allowWhatsApp    Boolean  @default(false)
+  preferredChannel String?
+  active           Boolean  @default(true)
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deliveries       Delivery[]
+  salesOrders      SalesOrder[]
+  postSaleTickets  PostSaleTicket[]
+  customerInvoices CustomerInvoice[]
+
+  @@index([tenantId])
+  @@index([tenantId, fullName])
+}
+
+// ============================================================
+// LINEAS DE ENTREGA
+// ============================================================
+model DeliveryLine {
+  id          String   @id @default(cuid())
+  deliveryId  String
+  delivery    Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  description String
+  quantity    Int      @default(1)
+  notes       String?
+  tenantId    String
+  createdAt   DateTime @default(now())
+
+  @@index([deliveryId])
+  @@index([tenantId])
+}
+
+// ============================================================
+// NOTIFICACIONES INTERNAS
+// ============================================================
+enum NotificationType {
+  INCIDENT_CREATED
+  DELIVERY_FAILED
+  ORDER_PARTIAL
+  INVOICE_MISMATCH
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Notification {
+  id         String               @id @default(cuid())
+  tenantId   String
+  tenant     Tenant               @relation(fields: [tenantId], references: [id])
+  type       NotificationType
+  title      String
+  message    String
+  severity   NotificationSeverity @default(MEDIUM)
+  entityType String?
+  entityId   String?
+  userId     String?              // Destinatario (null = todos del tenant)
+  readAt     DateTime?
+  createdAt  DateTime             @default(now())
+
+  @@index([tenantId, userId, readAt])
+  @@index([tenantId, createdAt])
+}
+
+// ============================================================
+// VENTAS (SALES ORDERS)
+// ============================================================
+enum SalesOrderStatus {
+  DRAFT
+  CONFIRMED
+  PARTIALLY_RESERVED
+  RESERVED
+  IN_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model SalesOrder {
+  id                    String           @id @default(cuid())
+  orderNumber           String
+  customerId            String
+  customer              Customer         @relation(fields: [customerId], references: [id])
+  status                SalesOrderStatus @default(DRAFT)
+  notes                 String?
+  scheduledDeliveryDate DateTime?
+  subtotal              Decimal          @default(0)
+  discountTotal         Decimal          @default(0)
+  total                 Decimal          @default(0)
+  estimatedMargin       Decimal?
+  realMargin            Decimal?
+  paymentStatus         String?          @default("UNBILLED") // UNBILLED, BILLED, PARTIALLY_PAID, PAID
+  createdById           String
+  createdBy             User             @relation(fields: [createdById], references: [id])
+  confirmedAt           DateTime?
+  deliveredAt           DateTime?
+  tenantId              String
+  tenant                Tenant           @relation(fields: [tenantId], references: [id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  lines            SalesOrderLine[]
+  deliveries       Delivery[]
+  postSaleTickets  PostSaleTicket[]
+  customerInvoices CustomerInvoice[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+model SalesOrderLine {
+  id               String     @id @default(cuid())
+  salesOrderId     String
+  salesOrder       SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product?   @relation(fields: [productId], references: [id])
+  description      String
+  quantity         Int
+  unitSalePrice    Decimal
+  unitExpectedCost Decimal?
+  lineTotal        Decimal
+  notes            String?
+  tenantId         String
+
+  @@index([salesOrderId])
+}
+
+// ============================================================
+// INVENTARIO LIGERO
+// ============================================================
+model ProductInventory {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id])
+  tenantId  String
+  onHand    Int      @default(0)
+  reserved  Int      @default(0)
+  available Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, productId])
+  @@index([tenantId])
+}
+
+enum StockMovementType {
+  RECEPTION_IN
+  SALE_RESERVE
+  SALE_RELEASE
+  DELIVERY_OUT
+  MANUAL_ADJUSTMENT
+}
+
+model StockMovement {
+  id            String            @id @default(cuid())
+  tenantId      String
+  tenant        Tenant            @relation(fields: [tenantId], references: [id])
+  productId     String
+  product       Product           @relation(fields: [productId], references: [id])
+  type          StockMovementType
+  quantity      Int
+  referenceType String?
+  referenceId   String?
+  notes         String?
+  performedById String?
+  createdAt     DateTime          @default(now())
+
+  @@index([tenantId, productId])
+  @@index([tenantId, createdAt])
+  @@index([referenceType, referenceId])
+}
+
+// ============================================================
+// POSVENTA
+// ============================================================
+enum PostSaleTicketType {
+  DAMAGE
+  MISSING_ITEM
+  INSTALLATION
+  WARRANTY
+  RETURN
+  OTHER
+}
+
+enum PostSaleTicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum PostSaleTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_SUPPLIER
+  RESOLVED
+  CLOSED
+}
+
+model PostSaleTicket {
+  id            String                 @id @default(cuid())
+  ticketNumber  String
+  customerId    String
+  customer      Customer               @relation(fields: [customerId], references: [id])
+  salesOrderId  String?
+  salesOrder    SalesOrder?            @relation(fields: [salesOrderId], references: [id])
+  deliveryId    String?
+  delivery      Delivery?              @relation(fields: [deliveryId], references: [id])
+  type          PostSaleTicketType
+  priority      PostSaleTicketPriority @default(NORMAL)
+  status        PostSaleTicketStatus   @default(OPEN)
+  description   String
+  resolution    String?
+  createdById   String
+  createdBy     User                   @relation("ticketCreatedBy", fields: [createdById], references: [id])
+  assignedToId  String?
+  assignedTo    User?                  @relation("ticketAssignedTo", fields: [assignedToId], references: [id])
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  tenantId      String
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id])
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@unique([tenantId, ticketNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+// ============================================================
+// FACTURACION CLIENTE (V4)
+// ============================================================
+enum CustomerInvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+model CustomerInvoice {
+  id             String                @id @default(cuid())
+  invoiceNumber  String
+  customerId     String
+  customer       Customer              @relation(fields: [customerId], references: [id])
+  salesOrderId   String?
+  salesOrder     SalesOrder?           @relation(fields: [salesOrderId], references: [id])
+  status         CustomerInvoiceStatus @default(DRAFT)
+  issueDate      DateTime?
+  dueDate        DateTime?
+  subtotal       Decimal               @default(0)
+  taxAmount      Decimal               @default(0)
+  total          Decimal               @default(0)
+  paidAmount     Decimal               @default(0)
+  paidAt         DateTime?
+  notes          String?
+  createdById    String
+  createdBy      User                  @relation(fields: [createdById], references: [id])
+  tenantId       String
+  tenant         Tenant                @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  lines CustomerInvoiceLine[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerId])
+}
+
+model CustomerInvoiceLine {
+  id                String          @id @default(cuid())
+  customerInvoiceId String
+  customerInvoice   CustomerInvoice @relation(fields: [customerInvoiceId], references: [id], onDelete: Cascade)
+  salesOrderLineId  String?
+  description       String
+  quantity          Int
+  unitPrice         Decimal
+  taxRate           Decimal         @default(21)
+  lineSubtotal      Decimal
+  lineTax           Decimal
+  lineTotal         Decimal
+  tenantId          String
+
+  @@index([customerInvoiceId])
+}
+
+// ============================================================
+// TESORERIA (V4)
+// ============================================================
+enum TreasuryType {
+  INCOME_EXPECTED
+  INCOME_CONFIRMED
+  EXPENSE_EXPECTED
+  EXPENSE_CONFIRMED
+}
+
+enum TreasuryStatus {
+  PENDING
+  UPCOMING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model TreasuryEntry {
+  id          String         @id @default(cuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  type        TreasuryType
+  sourceType  String?        // SUPPLIER_INVOICE, CUSTOMER_INVOICE, MANUAL
+  sourceId    String?
+  category    String?
+  concept     String
+  amount      Decimal
+  dueDate     DateTime?
+  paidDate    DateTime?
+  status      TreasuryStatus @default(PENDING)
+  notes       String?
+  createdById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([sourceType, sourceId])
+}
+
+// ============================================================
+// FILE STORAGE (V5)
+// ============================================================
+model FileAsset {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  provider         String   @default("local") // local, vercel-blob, s3
+  storageKey       String
+  publicUrl        String?  @db.Text
+  mimeType         String
+  fileName         String
+  fileSize         Int
+  checksum         String?
+  uploadedById     String?
+  createdAt        DateTime @default(now())
+
+  deliveryProofs DeliveryProof[]
+
+  @@index([tenantId])
+}
+
+// ============================================================
+// PRUEBAS DE ENTREGA (V5)
+// ============================================================
+enum DeliveryProofType {
+  PHOTO
+  SIGNATURE
+  GPS_SNAPSHOT
+  NOTE
+}
+
+model DeliveryProof {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id])
+  deliveryId   String
+  delivery     Delivery          @relation(fields: [deliveryId], references: [id])
+  type         DeliveryProofType
+  fileAssetId  String?
+  fileAsset    FileAsset?        @relation(fields: [fileAssetId], references: [id])
+  note         String?
+  latitude     Decimal?
+  longitude    Decimal?
+  capturedAt   DateTime          @default(now())
+  capturedById String?
+  requestId    String?           // Idempotency key from offline sync
+  createdAt    DateTime          @default(now())
+
+  @@index([deliveryId])
+  @@index([tenantId])
+  @@index([requestId])
+}
+
+// ============================================================
+// DEVICE SUBSCRIPTIONS — Web Push (V5)
+// ============================================================
+model DeviceSubscription {
+  id          String    @id @default(cuid())
+  tenantId    String
+  userId      String
+  endpoint    String    @db.Text
+  p256dh      String
+  auth        String
+  deviceLabel String?
+  active      Boolean   @default(true)
+  lastSeenAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, endpoint])
+  @@index([tenantId, userId])
+}
+
+// ============================================================
+// PLANTILLAS DE NOTIFICACION (V5)
+// ============================================================
+enum MessageChannel {
+  INTERNAL
+  PUSH
+  EMAIL
+  WHATSAPP
+}
+
+model NotificationTemplate {
+  id        String         @id @default(cuid())
+  tenantId  String
+  tenant    Tenant         @relation(fields: [tenantId], references: [id])
+  code      String
+  channel   MessageChannel
+  eventType String
+  subject   String?
+  body      String         @db.Text
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  rules AutomationRule[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+// ============================================================
+// REGLAS DE AUTOMATIZACION (V5)
+// ============================================================
+enum AutomationTarget {
+  USER
+  CUSTOMER
+  ROLE
+}
+
+model AutomationRule {
+  id             String           @id @default(cuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  code           String
+  eventType      String
+  channel        MessageChannel
+  target         AutomationTarget
+  enabled        Boolean          @default(true)
+  conditionsJson Json?
+  templateId     String?
+  template       NotificationTemplate? @relation(fields: [templateId], references: [id])
+  createdById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, eventType])
+}
+
+// ============================================================
+// COLA DE MENSAJES SALIENTES (V5)
+// ============================================================
+enum OutboundMessageStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model OutboundMessage {
+  id            String                @id @default(cuid())
+  tenantId      String
+  tenant        Tenant                @relation(fields: [tenantId], references: [id])
+  channel       MessageChannel
+  targetType    String                // USER, CUSTOMER
+  targetId      String?
+  destination   String                // email address, phone number, push endpoint
+  subject       String?
+  body          String                @db.Text
+  eventType     String
+  sourceType    String?
+  sourceId      String?
+  status        OutboundMessageStatus @default(QUEUED)
+  attempts      Int                   @default(0)
+  maxAttempts   Int                   @default(3)
+  nextAttemptAt DateTime?
+  lastError     String?
+  sentAt        DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([status, nextAttemptAt])
+  @@index([eventType, sourceType, sourceId])
+}
+
+// ============================================================
+// CONFIGURACION POR TENANT (V6)
+// ============================================================
+model TenantConfig {
+  id           String   @id @default(cuid())
+  tenantId     String   @unique
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  businessName String
+  tradeName    String?
+  taxId        String?
+  phone        String?
+  email        String?
+  address      String?
+  city         String?
+  province     String?
+  postalCode   String?
+  country      String   @default("ES")
+  timezone     String   @default("Europe/Madrid")
+  currency     String   @default("EUR")
+  language     String   @default("es")
+  settingsJson Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TenantBranding {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  logoFileAssetId  String?
+  primaryColor     String?
+  secondaryColor   String?
+  accentColor      String?
+  appName          String?
+  heroText         String?
+  updatedAt        DateTime @updatedAt
+}
+
+model TenantModule {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  moduleCode String
+  enabled    Boolean  @default(true)
+  configJson Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([tenantId, moduleCode])
+  @@index([tenantId])
+}
+
+enum TenantTemplateType {
+  NOTIFICATION
+  AUTOMATION
+  DOCUMENT
+  DASHBOARD_WIDGET
+}
+
+model TenantTemplate {
+  id          String             @id @default(cuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  type        TenantTemplateType
+  code        String
+  name        String
+  payloadJson Json?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([tenantId, type, code])
+  @@index([tenantId])
+}
+
+// ============================================================
+// IMPORTACIONES (V6)
+// ============================================================
+enum ImportJobType {
+  PRODUCTS
+  SUPPLIERS
+  CUSTOMERS
+  VEHICLES
+  SALES
+  PURCHASES
+}
+
+enum ImportJobStatus {
+  UPLOADED
+  VALIDATING
+  READY
+  IMPORTING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+model ImportJob {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  type            ImportJobType
+  status          ImportJobStatus @default(UPLOADED)
+  fileAssetId     String?
+  summaryJson     Json?
+  errorReportJson Json?
+  createdById     String
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+// ============================================================
+// ONBOARDING (V6)
+// ============================================================
+enum OnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  CONFIGURED
+  SEEDED
+  READY
+  LIVE
+}
+
+model TenantOnboarding {
+  id            String           @id @default(cuid())
+  tenantId      String           @unique
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  status        OnboardingStatus @default(NOT_STARTED)
+  checklistJson Json?
+  currentStep   Int              @default(0)
+  activatedById String?
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+// ============================================================
+// FEATURE FLAGS (V6)
+// ============================================================
+enum FeatureFlagScope {
+  GLOBAL
+  TENANT
+}
+
+model FeatureFlag {
+  id        String           @id @default(cuid())
+  tenantId  String?
+  tenant    Tenant?          @relation(fields: [tenantId], references: [id])
+  code      String
+  enabled   Boolean          @default(false)
+  scope     FeatureFlagScope @default(GLOBAL)
+  notes     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([code, scope])
+  @@index([tenantId])
+}
+
+// ============================================================
+// SOPORTE INTERNO (V6)
+// ============================================================
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum SupportCasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model SupportCase {
+  id           String              @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?             @relation(fields: [tenantId], references: [id])
+  source       String              @default("INTERNAL")
+  status       SupportCaseStatus   @default(OPEN)
+  priority     SupportCasePriority @default(NORMAL)
+  title        String
+  description  String              @db.Text
+  entityType   String?
+  entityId     String?
+  assignedToId String?
+  reportedById String?
+  resolution   String?
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ============================================================
+// OBSERVABILIDAD (V6)
+// ============================================================
+enum HealthSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum HealthCategory {
+  IMPORT
+  INTEGRATION
+  AUTOMATION
+  AUTH
+  STORAGE
+  BILLING
+  UNKNOWN
+}
+
+model SystemHealthEvent {
+  id          String         @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?        @relation(fields: [tenantId], references: [id])
+  severity    HealthSeverity
+  category    HealthCategory
+  code        String
+  message     String
+  payloadJson Json?
+  resolved    Boolean        @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([tenantId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+// ============================================================
+// BILLING SAAS (V7)
+// ============================================================
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model SubscriptionPlan {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  description  String?
+  billingCycle BillingCycle @default(MONTHLY)
+  priceCents   Int
+  currency     String       @default("EUR")
+  active       Boolean      @default(true)
+  featuresJson Json?
+  limitsJson   Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  subscriptions TenantSubscription[]
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  PAUSED
+  EXPIRED
+}
+
+enum BillingProvider {
+  STRIPE
+  MANUAL
+}
+
+model TenantSubscription {
+  id                     String             @id @default(cuid())
+  tenantId               String             @unique
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id])
+  planId                 String
+  plan                   SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status                 SubscriptionStatus @default(TRIAL)
+  provider               BillingProvider    @default(MANUAL)
+  providerCustomerId     String?
+  providerSubscriptionId String?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  trialStartsAt          DateTime?
+  trialEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  cancelledAt            DateTime?
+  pausedAt               DateTime?
+  reactivatedAt          DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  invoices BillingInvoice[]
+
+  @@index([status])
+}
+
+enum BillingInvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+  FAILED
+}
+
+model BillingInvoice {
+  id                   String              @id @default(cuid())
+  tenantId             String
+  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+  tenantSubscriptionId String?
+  subscription         TenantSubscription? @relation(fields: [tenantSubscriptionId], references: [id])
+  externalInvoiceId    String?
+  status               BillingInvoiceStatus @default(DRAFT)
+  amountCents          Int
+  currency             String              @default("EUR")
+  issuedAt             DateTime?
+  dueAt                DateTime?
+  paidAt               DateTime?
+  hostedUrl            String?
+  pdfUrl               String?
+  metadataJson         Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model UsageMetric {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  metricCode   String
+  metricValue  Int
+  snapshotDate DateTime @default(now())
+  periodKey    String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  @@unique([tenantId, metricCode, periodKey])
+  @@index([tenantId])
+}
+
+enum BillingEventSource {
+  WEBHOOK
+  MANUAL
+  SYSTEM
+}
+
+model BillingEvent {
+  id              String             @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?            @relation(fields: [tenantId], references: [id])
+  type            String
+  source          BillingEventSource
+  externalEventId String?
+  payloadJson     Json?
+  processed       Boolean            @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime           @default(now())
+
+  @@unique([source, externalEventId])
+  @@index([tenantId])
+  @@index([processed])
+}
+
+// ============================================================
+// COMPLIANCE / RGPD (V7)
+// ============================================================
+enum DataExportType {
+  FULL_EXPORT
+  GDPR_EXPORT
+  AUDIT_EXPORT
+}
+
+enum DataExportStatus {
+  REQUESTED
+  PROCESSING
+  READY
+  EXPIRED
+  FAILED
+}
+
+model DataExportRequest {
+  id            String           @id @default(cuid())
+  tenantId      String
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  requestedById String
+  type          DataExportType
+  status        DataExportStatus @default(REQUESTED)
+  fileAssetId   String?
+  expiresAt     DateTime?
+  reason        String?
+  createdAt     DateTime         @default(now())
+  completedAt   DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum DataDeletionType {
+  CUSTOMER_DATA
+  TENANT_DATA
+}
+
+enum DataDeletionStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model DataDeletionRequest {
+  id               String             @id @default(cuid())
+  tenantId         String
+  tenant           Tenant             @relation(fields: [tenantId], references: [id])
+  requestedById    String
+  type             DataDeletionType
+  targetEntityType String?
+  targetEntityId   String?
+  status           DataDeletionStatus @default(REQUESTED)
+  reason           String
+  approvedById     String?
+  createdAt        DateTime           @default(now())
+  completedAt      DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+// ============================================================
+// SECURITY (V7)
+// ============================================================
+enum SecurityEventSeverity {
+  INFO
+  WARNING
+  HIGH
+  CRITICAL
+}
+
+enum SecurityEventType {
+  LOGIN_FAILED
+  LOGIN_SUCCESS
+  PASSWORD_CHANGED
+  MFA_ENABLED
+  MFA_DISABLED
+  SESSION_REVOKED
+  RATE_LIMIT_HIT
+  ADMIN_ACCESS
+  SUSPICIOUS_ACTIVITY
+  ACCOUNT_LOCKED
+}
+
+model SecurityEvent {
+  id          String                @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?               @relation(fields: [tenantId], references: [id])
+  userId      String?
+  severity    SecurityEventSeverity
+  type        SecurityEventType
+  ipAddress   String?
+  userAgent   String?
+  payloadJson Json?
+  createdAt   DateTime              @default(now())
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+enum MfaType {
+  TOTP
+}
+
+model UserMfa {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  tenantId            String
+  type                MfaType  @default(TOTP)
+  secretEncrypted     String   @db.Text
+  recoveryCodesHash   String   @db.Text
+  enabled             Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ============================================================
+// BACKUPS (V7)
+// ============================================================
+enum BackupType {
+  TENANT_EXPORT
+  SYSTEM_BACKUP
+}
+
+enum BackupStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model BackupJob {
+  id           String       @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?      @relation(fields: [tenantId], references: [id])
+  type         BackupType
+  status       BackupStatus @default(QUEUED)
+  storageKey   String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  metadataJson Json?
+  createdAt    DateTime     @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ============================================================
+// AI AGENT SWARM (V7.7)
+// ============================================================
+enum AiVisibilityScope {
+  TENANT
+  INTERNAL
+  GLOBAL
+}
+
+model AiAgent {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  domain          String
+  active          Boolean           @default(true)
+  visibilityScope AiVisibilityScope @default(TENANT)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  configs       AiAgentConfig[]
+  conversations AiConversation[]
+  insights      AiInsight[]
+  actions       AiActionSuggestion[]
+  handoffsFrom  AiHandoff[]        @relation("handoffFrom")
+  handoffsTo    AiHandoff[]        @relation("handoffTo")
+  evaluations   AiEvaluationRun[]
+  toolPolicies  AiToolPolicy[]
+}
+
+model AiAgentConfig {
+  id                  String   @id @default(cuid())
+  tenantId            String?
+  agentId             String
+  agent               AiAgent  @relation(fields: [agentId], references: [id])
+  modelProvider       String   @default("gemini")
+  modelName           String   @default("gemini-2.5-flash")
+  systemPromptVersion String   @default("v1")
+  thresholdsJson      Json?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([agentId])
+}
+
+enum AiConversationScope {
+  MODULE
+  EXECUTIVE
+  ALERT
+  SUPPORT
+}
+
+enum AiConversationStatus {
+  OPEN_CONV
+  CLOSED_CONV
+  ARCHIVED
+}
+
+model AiConversation {
+  id        String                 @id @default(cuid())
+  tenantId  String
+  agentId   String
+  agent     AiAgent                @relation(fields: [agentId], references: [id])
+  userId    String
+  scopeType AiConversationScope    @default(MODULE)
+  scopeId   String?
+  status    AiConversationStatus   @default(OPEN_CONV)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  messages AiMessage[]
+
+  @@index([tenantId, userId])
+  @@index([agentId])
+}
+
+enum AiMessageRole {
+  SYSTEM_MSG
+  USER_MSG
+  AGENT_MSG
+  TOOL_MSG
+  SUMMARY_MSG
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiMessageRole
+  content        String         @db.Text
+  metadataJson   Json?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId])
+}
+
+enum AiInsightSeverity {
+  AI_INFO
+  AI_WARNING
+  AI_HIGH
+  AI_CRITICAL
+}
+
+enum AiInsightStatus {
+  NEW
+  ACKNOWLEDGED
+  DISMISSED
+  CONVERTED_TO_ACTION
+}
+
+model AiInsight {
+  id              String            @id @default(cuid())
+  tenantId        String
+  agentId         String
+  agent           AiAgent           @relation(fields: [agentId], references: [id])
+  entityType      String?
+  entityId        String?
+  severity        AiInsightSeverity
+  category        String
+  title           String
+  summary         String            @db.Text
+  evidenceJson    Json?
+  confidenceScore Int?
+  status          AiInsightStatus   @default(NEW)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  actions AiActionSuggestion[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([agentId])
+}
+
+enum AiActionPriority {
+  AI_LOW
+  AI_NORMAL
+  AI_HIGH
+  AI_URGENT
+}
+
+enum AiActionStatus {
+  AI_OPEN
+  ACCEPTED
+  REJECTED
+  EXECUTED
+  AI_EXPIRED
+}
+
+model AiActionSuggestion {
+  id                   String           @id @default(cuid())
+  tenantId             String
+  agentId              String
+  agent                AiAgent          @relation(fields: [agentId], references: [id])
+  targetType           String
+  targetId             String?
+  priority             AiActionPriority @default(AI_NORMAL)
+  title                String
+  recommendation       String           @db.Text
+  rationale            String           @db.Text
+  evidenceJson         Json?
+  requiresConfirmation Boolean          @default(true)
+  status               AiActionStatus   @default(AI_OPEN)
+  createdByInsightId   String?
+  insight              AiInsight?       @relation(fields: [createdByInsightId], references: [id])
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum AiHandoffUrgency {
+  HANDOFF_LOW
+  HANDOFF_NORMAL
+  HANDOFF_HIGH
+  HANDOFF_URGENT
+}
+
+enum AiHandoffStatus {
+  HANDOFF_CREATED
+  HANDOFF_ACCEPTED
+  HANDOFF_COMPLETED
+  HANDOFF_REJECTED
+}
+
+model AiHandoff {
+  id          String           @id @default(cuid())
+  tenantId    String
+  fromAgentId String
+  fromAgent   AiAgent          @relation("handoffFrom", fields: [fromAgentId], references: [id])
+  toAgentId   String
+  toAgent     AiAgent          @relation("handoffTo", fields: [toAgentId], references: [id])
+  reason      String
+  payloadJson Json?
+  urgency     AiHandoffUrgency @default(HANDOFF_NORMAL)
+  status      AiHandoffStatus  @default(HANDOFF_CREATED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([tenantId])
+}
+
+enum AiEvalType {
+  PROMPT_EVAL
+  CLASSIFICATION_EVAL
+  HALLUCINATION_EVAL
+  PERMISSION_EVAL
+  ROUTING_EVAL
+  QUALITY_EVAL
+}
+
+enum AiEvalStatus {
+  EVAL_QUEUED
+  EVAL_RUNNING
+  EVAL_PASSED
+  EVAL_FAILED
+}
+
+model AiEvaluationRun {
+  id             String       @id @default(cuid())
+  tenantId       String?
+  agentId        String?
+  agent          AiAgent?     @relation(fields: [agentId], references: [id])
+  evaluationType AiEvalType
+  status         AiEvalStatus @default(EVAL_QUEUED)
+  resultJson     Json?
+  createdAt      DateTime     @default(now())
+  finishedAt     DateTime?
+
+  @@index([agentId])
+}
+
+model AiDailyBrief {
+  id               String   @id @default(cuid())
+  tenantId         String
+  generatedForDate DateTime
+  executiveSummary String   @db.Text
+  prioritiesJson   Json?
+  risksJson        Json?
+  actionsJson      Json?
+  createdAt        DateTime @default(now())
+
+  @@unique([tenantId, generatedForDate])
+  @@index([tenantId])
+}
+
+model AiToolPolicy {
+  id                   String   @id @default(cuid())
+  agentId              String
+  agent                AiAgent  @relation(fields: [agentId], references: [id])
+  allowedToolsJson     Json?
+  forbiddenToolsJson   Json?
+  allowedActionsJson   Json?
+  forbiddenActionsJson Json?
+  updatedAt            DateTime @updatedAt
+
+  @@index([agentId])
+}
+
+// ============================================================
+// AI COGNITIVE LAYER (V7.8)
+// ============================================================
+model AiPersonalityProfile {
+  id                   String   @id @default(cuid())
+  agentId              String
+  tenantId             String?
+  roleSimulated        String
+  tone                 String
+  vocabularyJson       Json?
+  prohibitedPhrasesJson Json?
+  reasoningStyle       String?
+  outputStyle          String?
+  escalationRulesJson  Json?
+  confidenceRulesJson  Json?
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([agentId, tenantId])
+  @@index([agentId])
+}
+
+model AiGlossaryTerm {
+  id                String   @id @default(cuid())
+  tenantId          String?
+  domain            String
+  term              String
+  shortDefinition   String
+  longDefinition    String?  @db.Text
+  synonymsJson      Json?
+  relatedEntitiesJson Json?
+  businessLanguage  String?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([domain, term, tenantId])
+  @@index([domain])
+}
+
+model AiOntologyRelation {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  sourceType   String
+  relationType String
+  targetType   String
+  description  String
+  createdAt    DateTime @default(now())
+
+  @@index([sourceType])
+  @@index([targetType])
+}
+
+model AiContextPack {
+  id          String   @id @default(cuid())
+  tenantId    String
+  agentId     String
+  packType    String
+  summaryJson Json
+  generatedAt DateTime @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, agentId, packType])
+}
+
+model AiDocumentReadingProfile {
+  id                   String   @id @default(cuid())
+  agentId              String
+  documentType         String
+  fieldsExpectedJson   Json?
+  ambiguityRulesJson   Json?
+  inconsistencyRulesJson Json?
+  outputTemplateJson   Json?
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([agentId, documentType])
+}
+
+enum AiMemoryType {
+  SUMMARY
+  RISK
+  PREFERENCE
+  PATTERN
+}
+
+model AiEntityMemory {
+  id              String       @id @default(cuid())
+  tenantId        String
+  agentId         String
+  entityType      String
+  entityId        String
+  memoryType      AiMemoryType
+  content         String       @db.Text
+  confidenceScore Int?
+  lastUsedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([tenantId, agentId])
+  @@index([entityType, entityId])
+}
+
+enum AiFeedbackSignalType {
+  USEFUL
+  NOT_USEFUL
+  INCORRECT
+  TOO_GENERIC
+  TOO_TECHNICAL
+  MISSED_RISK
+}
+
+model AiFeedbackSignal {
+  id             String               @id @default(cuid())
+  tenantId       String
+  agentId        String
+  userId         String
+  conversationId String?
+  messageId      String?
+  signalType     AiFeedbackSignalType
+  notes          String?
+  createdAt      DateTime             @default(now())
+
+  @@index([tenantId, agentId])
+}
+
+enum AiPersonaEvalType {
+  DOMAIN_UNDERSTANDING
+  DOCUMENT_READING
+  TONE
+  PERMISSION_PERSONA
+  ACTION_QUALITY
+}
+
+enum AiPersonaEvalStatus {
+  PERSONA_PASSED
+  PERSONA_FAILED
+  PERSONA_REVIEW
+}
+
+model AiPersonaEval {
+  id           String              @id @default(cuid())
+  agentId      String
+  evalType     AiPersonaEvalType
+  inputJson    Json?
+  expectedJson Json?
+  actualJson   Json?
+  score        Int?
+  status       AiPersonaEvalStatus @default(PERSONA_REVIEW)
+  createdAt    DateTime            @default(now())
+  evaluatedAt  DateTime?
+
+  @@index([agentId])
+}
+
+// ============================================================
+// AUTONOMOUS OPERATIONS (V7.9)
+// ============================================================
+enum MissionStatus {
+  DRAFT_MISSION
+  PLANNING
+  PLANNED
+  EXECUTING
+  COMPLETED_MISSION
+  FAILED_MISSION
+  CANCELLED_MISSION
+}
+
+model AiMission {
+  id           String        @id @default(cuid())
+  tenantId     String
+  orderText    String        @db.Text
+  parsedIntent String?
+  status       MissionStatus @default(DRAFT_MISSION)
+  initiatedById String
+  totalSteps   Int           @default(0)
+  completedSteps Int         @default(0)
+  failedSteps  Int           @default(0)
+  summaryJson  Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  steps AiMissionStep[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+enum MissionStepStatus {
+  PENDING_STEP
+  DRY_RUN_STEP
+  DRY_RUN_DONE
+  PENDING_CONFIRMATION
+  EXECUTING_STEP
+  COMPLETED_STEP
+  FAILED_STEP
+  SKIPPED_STEP
+  DENIED_STEP
+}
+
+model AiMissionStep {
+  id              String            @id @default(cuid())
+  missionId       String
+  mission         AiMission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  stepOrder       Int
+  agentCode       String
+  actionCode      String
+  description     String
+  inputJson       Json?
+  dryRunResultJson Json?
+  executeResultJson Json?
+  status          MissionStepStatus @default(PENDING_STEP)
+  riskLevel       String            @default("LOW")
+  requiresConfirm Boolean           @default(false)
+  confirmedById   String?
+  confirmedAt     DateTime?
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  tenantId        String
+  createdAt       DateTime          @default(now())
+
+  @@index([missionId])
+  @@index([tenantId])
+}
+
+enum ActionRiskLevel {
+  ACTION_LOW
+  ACTION_MEDIUM
+  ACTION_HIGH
+  ACTION_CRITICAL
+}
+
+model ActionRegistryEntry {
+  id                      String          @id @default(cuid())
+  actionCode              String          @unique
+  domain                  String
+  description             String
+  riskLevel               ActionRiskLevel @default(ACTION_LOW)
+  requiresConfirmation    Boolean         @default(false)
+  allowedRolesJson        Json?
+  allowedAgentsJson       Json?
+  tenantScoped            Boolean         @default(true)
+  idempotent              Boolean         @default(true)
+  dryRunSupported         Boolean         @default(true)
+  auditRequired           Boolean         @default(true)
+  forbiddenInRestrictedMode Boolean       @default(false)
+  featureFlag             String?
+  active                  Boolean         @default(true)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+}
+
+model AgentExecutionPolicy {
+  id                String   @id @default(cuid())
+  agentCode         String
+  actionCode        String
+  allowed           Boolean  @default(true)
+  autoExecute       Boolean  @default(false)
+  requiresDryRun    Boolean  @default(true)
+  maxExecutionsPerHour Int?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([agentCode, actionCode])
+  @@index([agentCode])
+}
+
+model AgentExecutionLog {
+  id              String   @id @default(cuid())
+  tenantId        String
+  missionId       String?
+  missionStepId   String?
+  agentCode       String
+  actionCode      String
+  mode            String   @default("dry-run") // dry-run | execute
+  inputJson       Json?
+  outputJson      Json?
+  success         Boolean
+  errorMessage    String?
+  durationMs      Int?
+  affectedEntities Json?
+  evidenceSummary String?
+  rollbackPossible Boolean @default(false)
+  initiatedById   String?
+  confirmedById   String?
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, agentCode])
+  @@index([missionId])
+  @@index([createdAt])
 }
